@@ -1,0 +1,25 @@
+{
+  "exclude": "(^dist/)",
+  "linters": {
+    "filename": {
+	  "type": "filename"
+	},
+	
+	"generated": {
+	  "type": "generated"
+	},
+	
+	"merge-conflict": {
+	  "type": "merge-conflict"
+	},
+	
+	"chmod": {
+	  "type": "chmod"
+	},
+	
+    "python": {
+      "type": "pep8",
+      "include": "(\\.py$)"
+    }
+  }
+}
