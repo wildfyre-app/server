@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    Hello ({{ username }}),<br />
+    <br />
+    Please confirm that this is your email address by clicking on the link below:<br />
+    <br />
+    <a href="https://api.wildfyre.net{% url 'users:confirm-mail' pk nonce %}">https://api.wildfyre.net{% url 'users:confirm-mail' pk nonce %}</a><br />
+    <br />
+    If you didn't registered this email, were are sorry for that. You then can safely ignore this email.
+</body>
+</html>

@@ -1,0 +1,7 @@
+Hello ({{ username }}),
+
+Please confirm that this is your email address by clicking on the link below:
+
+https://api.wildfyre.net{% url 'users:confirm-mail' pk nonce %}
+
+If you didn't registered this email, were are sorry for that. You then can safely ignore this email.

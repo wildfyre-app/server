@@ -1,8 +1,12 @@
 {
-  "exclude": "(^dist/)",
+  "exclude": ["(^dist/)", "(env/)", "(venv/)"],
   "linters": {
     "filename": {
 	  "type": "filename"
+	},
+	
+	"spelling": {
+		"type": "spelling"
 	},
 	
 	"generated": {
@@ -19,7 +23,12 @@
 	
     "python": {
       "type": "pep8",
-      "include": "(\\.py$)"
+      "include": "(\\.py$)",
+	  "exclude": "(test.*.py)",
+	  "severity": {
+		"E501": "disabled",
+		"E402": "disabled"
+      }
     }
   }
 }
