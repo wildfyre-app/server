@@ -42,6 +42,14 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'account.apps.accountConfig',
     'users.apps.usersConfig',
+
+    # Areas:
+    # Fun
+    'areas.fun.posts.apps.postsConfig',
+    'areas.fun.rep.apps.reputationConfig',
+    # Information
+    'areas.information.posts.apps.postsConfig',
+    'areas.information.rep.apps.reputationConfig',
 ]
 
 MIDDLEWARE = [

@@ -16,9 +16,9 @@ urlpatterns = [
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     url(r'^admin/', admin.site.urls),
+    url(r'^areas/', include('areas.urls')),
     url(r'^account/', include('account.urls')),
     url(r'^users/', include('users.urls')),
-
     url(r'^browse/auth/', include('rest_framework.urls')),
 ]
 

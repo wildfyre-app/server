@@ -269,3 +269,4 @@ ModelManifest.xml
 ptvs_virtualenv_proxy.py
 web.config
 web.debug.config
+templates/index.html
