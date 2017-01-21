@@ -7,6 +7,9 @@
 # Local test databse
 /api/db.sqlite3
 
+# Local Media storage
+/api/media/
+
 # Data from Production server (SECRET_KEY etc)
 /api/production.py
 

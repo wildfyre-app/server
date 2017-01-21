@@ -39,7 +39,7 @@ DATABASES = {
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'mail.wildfyre.net'
 EMAIL_PORT = '587'  # Use submission Port
-EMAIL_HOST_USER = 'api'
+EMAIL_HOST_USER = 'noreply@wildfyre.net'
 EMAIL_HOST_PASSWORD = ''  # Set password
 EMAIL_USE_TLS = True
 
@@ -50,14 +50,18 @@ DEFAULT_FROM_EMAIL = 'noreply@wildfyre.net'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
-STATIC_ROOT = '/var/www/static/api '
+STATIC_ROOT = '/var/www/static/api'
 STATIC_URL = 'https://static.wildfyre.net/api/'
 
 MEDIA_ROOT = '/var/www/upload/api'
 MEDIA_URL = 'https://upload.wildfyre.net/api/'
 
 
-# TLS Security Settings
+# Security Settings
 CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'

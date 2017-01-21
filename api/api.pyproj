@@ -31,6 +31,17 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="account\admin.py" />
+    <Compile Include="account\apps.py" />
+    <Compile Include="account\migrations\__init__.py" />
+    <Compile Include="account\models.py" />
+    <Compile Include="account\serializers.py" />
+    <Compile Include="account\tests.py" />
+    <Compile Include="account\urls.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="account\views.py" />
+    <Compile Include="account\__init__.py" />
     <Compile Include="api\app_settings.py">
       <SubType>Code</SubType>
     </Compile>
@@ -46,7 +57,9 @@
     <Compile Include="users\apps.py" />
     <Compile Include="users\migrations\__init__.py" />
     <Compile Include="users\models.py" />
-    <Compile Include="users\serializers.py" />
+    <Compile Include="users\serializers.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="users\tests.py" />
     <Compile Include="users\urls.py" />
     <Compile Include="users\views.py" />
@@ -55,24 +68,21 @@
   <ItemGroup>
     <Content Include="requirements.txt" />
     <Content Include="templates\rest_framework\api.html" />
-    <Content Include="users\templates\users\mail_confirm.txt" />
-    <Content Include="users\templates\users\confirm-mail.html" />
-    <Content Include="users\templates\users\mail_confirm.html" />
-    <Content Include="users\__pycache__\permissions.cpython-35.pyc" />
-    <Content Include="users\__pycache__\serializers.cpython-35.pyc" />
-    <Content Include="users\__pycache__\urls.cpython-35.pyc" />
-    <Content Include="users\__pycache__\views.cpython-35.pyc" />
-    <Content Include="users\__pycache__\__init__.cpython-35.pyc" />
+    <Content Include="account\templates\account\mail_confirm.txt" />
+    <Content Include="account\templates\account\confirm-mail.html" />
+    <Content Include="account\templates\account\mail_confirm.html" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="account\" />
+    <Folder Include="account\migrations\" />
+    <Folder Include="account\templates\" />
+    <Folder Include="account\templates\account\" />
     <Folder Include="api\" />
     <Folder Include="templates\" />
     <Folder Include="templates\rest_framework\" />
     <Folder Include="users\" />
     <Folder Include="users\migrations\" />
     <Folder Include="users\templates\" />
-    <Folder Include="users\templates\users\" />
-    <Folder Include="users\__pycache__\" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env\">
