@@ -29,6 +29,11 @@
 		"E501": "disabled",
 		"E402": "disabled"
       }
-    }
+    },
+	
+	"docs_text": {
+	  "type": "text",
+	  "include": "(^docs/)"
+	}
   }
 }
