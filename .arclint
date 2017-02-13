@@ -2,38 +2,33 @@
   "exclude": ["(^dist/)", "(env/)", "(venv/)"],
   "linters": {
     "filename": {
-	  "type": "filename"
-	},
-	
-	"spelling": {
-		"type": "spelling"
-	},
-	
-	"generated": {
-	  "type": "generated"
-	},
-	
-	"merge-conflict": {
-	  "type": "merge-conflict"
-	},
-	
-	"chmod": {
-	  "type": "chmod"
-	},
-	
+      "type": "filename"
+    },
+
+    "spelling": {
+      "type": "spelling"
+    },
+
+    "generated": {
+      "type": "generated"
+    },
+
+    "merge-conflict": {
+      "type": "merge-conflict"
+    },
+
+    "chmod": {
+      "type": "chmod"
+    },
+
     "python": {
       "type": "pep8",
       "include": "(\\.py$)",
-	  "exclude": "(test.*.py)",
-	  "severity": {
-		"E501": "disabled",
-		"E402": "disabled"
+      "exclude": "(test.*.py)",
+      "severity": {
+        "E501": "disabled",
+        "E402": "disabled"
       }
-    },
-	
-	"docs_text": {
-	  "type": "text",
-	  "include": "(^docs/)"
-	}
+    }
   }
 }
