@@ -102,3 +102,12 @@ class Post(models.Model):
 
     class Meta:
         abstract = True
+
+
+class Comment(models.Model):
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='%(app_label)s_%(class)s')
+    created = models.DateTimeField(auto_now_add=True)
+    text = models.TextField()
+
+    class Meta:
+        abstract = True

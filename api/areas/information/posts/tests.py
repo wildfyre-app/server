@@ -208,3 +208,44 @@ class SpreadTest(TestCase):
 
         self.assertEqual(response.status_code, 204)
         self.assertEqual(new_stack, old_stack)
+
+
+class CommentTest(TestCase):
+    def setUp(self):
+        # We need the test factory for all tests
+        self.factory = APIRequestFactory()
+        # Test User
+        self.user = User.objects.create_user(
+            username='user', password='secret')
+
+        self.user_author = User.objects.create_user(
+            username='author', password='secret')
+
+        # Test Posts
+        self.post = Post.objects.create(author=self.user_author, text="Hi there")
+
+    def test_not_authenticated(self):
+        """
+        Status code 401: Unauthorized should be raised
+        """
+        request = self.factory.post(reverse('areas:information:posts:detail', kwargs={'pk': self.post.pk, 'nonce': self.post.nonce}),
+                                   {'text': "hi"})
+        request.user = AnonymousUser()
+        response = PostView.as_view()(request)
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_comment(self):
+        """
+        Comment should be created
+        Also status code 201: Created should be raised
+        """
+        request = self.factory.post(reverse('areas:information:posts:detail', kwargs={'pk': self.post.pk, 'nonce': self.post.nonce}),
+                                   {'text': "hi"})
+        force_authenticate(request, self.user)
+        response = DetailView.as_view()(request, pk=self.post.id, nonce=self.post.nonce)
+
+        self.post.refresh_from_db()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(self.post.comment_set.count(), 1)

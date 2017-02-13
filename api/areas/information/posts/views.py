@@ -1,8 +1,8 @@
 from rest_framework import generics
-from areas.base.posts.views import PostView, DetailView, OwnView, SpreadView
+from areas.base.posts.views import PostView, OwnView, DetailView, CommentView, SpreadView
 
 from . import serializers
-from .models import Post
+from .models import Post, Comment
 from areas.information.rep.models import Reputation
 
 
@@ -20,7 +20,13 @@ class OwnView(OwnView):
 
 class DetailView(DetailView):
     serializer_class = serializers.PostSerializer
-    queryset = Post.objects.filter(active=True)
+    comment_serializer_class = serializers.CommentSerializer
+    queryset = Post.objects.all()
+
+
+class CommentView(CommentView):
+    serializer_class = serializers.CommentSerializer
+    queryset = Comment.objects.all()
 
 
 class SpreadView(SpreadView):

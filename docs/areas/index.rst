@@ -9,6 +9,7 @@ Areas are where the magic happens.
     :caption: Contents:
 
     posts
+    comments
     rep
 
 Available Areas
