@@ -3,7 +3,7 @@ from areas.base.posts.views import PostView, OwnView, DetailView, CommentView, S
 
 from . import serializers
 from .models import Post, Comment
-from areas.information.rep.models import Reputation
+from areas.fun.rep.models import Reputation
 
 
 class PostView(PostView):
