@@ -5,6 +5,8 @@ from .models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    name = serializers.ReadOnlyField(source='user.username')
+
     def create(self, validated_data):
         if Profile.objects.filter(user=validated_data.get('user')).count() is not 0:
             raise ValidationError('Only one Profile per User allowed', code='unique')
@@ -12,5 +14,5 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ('user', 'avatar', 'bio',)
+        fields = ('user', 'name', 'avatar', 'bio',)
         read_only_fields = ('user',)
