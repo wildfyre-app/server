@@ -30,5 +30,6 @@ class CommentView(CommentView):
 
 
 class SpreadView(SpreadView):
+    serializer_class = serializers.PostSerializer
     reputation_class = Reputation
     queryset = Post.objects.filter(active=True)

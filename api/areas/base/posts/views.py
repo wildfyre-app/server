@@ -107,6 +107,7 @@ class SpreadView(views.APIView):
 
     def post(self, request, pk, nonce,  spread):
         obj = self.get_object(pk=pk, nonce=nonce)
+        serializer = self.serializer_class(obj)
 
         # Check if post is in users stack, and the user is therefore allowed to spread it
         if not obj.stack_assigned.filter(pk=self.request.user.pk).exists():
@@ -114,7 +115,7 @@ class SpreadView(views.APIView):
 
         self.spread(request, spread, obj)
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.data)
 
     def spread(self, request, spread, obj):
         """
