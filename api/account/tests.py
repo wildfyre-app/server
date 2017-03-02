@@ -7,7 +7,8 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 from .views import *
 from .models import *
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from rest_framework.authtoken.models import Token
 from django.core import mail
 
@@ -17,13 +18,13 @@ class AccountTest(TestCase):
             # We need the test factory for all tests
             self.factory = APIRequestFactory()
             # Test User
-            self.user1 = User.objects.create_user(
+            self.user1 = get_user_model().objects.create_user(
                 username='user1', email='user1@example.invalid', password='secret')
 
-            self.user2 = User.objects.create_user(
+            self.user2 = get_user_model().objects.create_user(
                 username='user2', email='user2@example.invalid', password='secret')
 
-            self.user_no_email = User.objects.create_user(
+            self.user_no_email = get_user_model().objects.create_user(
                 username='user_no_email', password='secret')
 
     def test_not_authenticated(self):
@@ -84,7 +85,7 @@ class EmailTest(TestCase):
             # We need the test factory for all tests
             self.factory = APIRequestFactory()
             # Test User
-            self.user = User.objects.create_user(
+            self.user = get_user_model().objects.create_user(
                 username="user", email="user@example.invalid", password="secret")
 
     def test_change_mail(self):

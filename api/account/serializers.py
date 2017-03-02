@@ -4,7 +4,7 @@ from django.contrib.auth.hashers import make_password
 from django.core import exceptions
 from django.shortcuts import render
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import ConfirmMail
 
 
@@ -12,12 +12,12 @@ class AccountSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     class Meta:
-        model = User
+        model = get_user_model()
         fields = ('id', 'username', 'email', 'password',)
         read_only_fields = ('username',)
 
     def validate(self, attrs):
-        user = User(**attrs)
+        user = get_user_model()(**attrs)
 
         # region password
         password = attrs.get('password')
@@ -36,7 +36,7 @@ class AccountSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def update(self, instance, validated_data):
-        user = User.objects.get(username=instance.username)
+        user = get_user_model().objects.get(username=instance.username)
 
         if validated_data.get('password') is not None:
             validated_data['password'] = make_password(validated_data.get('password'))

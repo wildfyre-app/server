@@ -5,7 +5,8 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from .views import *
 from .models import *
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 
 
 class PostTest(TestCase):
@@ -13,10 +14,10 @@ class PostTest(TestCase):
         # We need the test factory for all tests
         self.factory = APIRequestFactory()
         # Test User
-        self.user = User.objects.create_user(
+        self.user = get_user_model().objects.create_user(
             username='user', password='secret')
 
-        self.user_author = User.objects.create_user(
+        self.user_author = get_user_model().objects.create_user(
             username='author', password='secret')
 
         # Test Posts
@@ -57,10 +58,10 @@ class DetailTest(TestCase):
         # We need the test factory for all tests
         self.factory = APIRequestFactory()
         # Test User
-        self.user = User.objects.create_user(
+        self.user = get_user_model().objects.create_user(
             username='user', password='secret')
 
-        self.user_author = User.objects.create_user(
+        self.user_author = get_user_model().objects.create_user(
             username='author', password='secret')
 
         # Test Posts
@@ -111,10 +112,10 @@ class OwnTest(TestCase):
         # We need the test factory for all tests
         self.factory = APIRequestFactory()
         # Test User
-        self.user = User.objects.create_user(
+        self.user = get_user_model().objects.create_user(
             username='user', password='secret')
 
-        self.user_author = User.objects.create_user(
+        self.user_author = get_user_model().objects.create_user(
             username='author', password='secret')
 
         # Test Posts
@@ -155,10 +156,10 @@ class SpreadTest(TestCase):
         # We need the test factory for all tests
         self.factory = APIRequestFactory()
         # Test User
-        self.user = User.objects.create_user(
+        self.user = get_user_model().objects.create_user(
             username='user', password='secret')
 
-        self.user_author = User.objects.create_user(
+        self.user_author = get_user_model().objects.create_user(
             username='author', password='secret')
 
         # Test Posts
@@ -184,7 +185,7 @@ class SpreadTest(TestCase):
         user_spread = Reputation.objects.get(user=self.user).spread
         new_stack = Post.objects.get(pk=self.post.pk).stack_count
 
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(new_stack, old_stack + user_spread)
 
     def test_spread_false(self):
@@ -206,7 +207,7 @@ class SpreadTest(TestCase):
 
         new_stack = Post.objects.get(pk=self.post.pk).stack_count
 
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(new_stack, old_stack)
 
 
@@ -215,10 +216,10 @@ class CommentTest(TestCase):
         # We need the test factory for all tests
         self.factory = APIRequestFactory()
         # Test User
-        self.user = User.objects.create_user(
+        self.user = get_user_model().objects.create_user(
             username='user', password='secret')
 
-        self.user_author = User.objects.create_user(
+        self.user_author = get_user_model().objects.create_user(
             username='author', password='secret')
 
         # Test Posts

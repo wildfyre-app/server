@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
 
+    'core.apps.coreConfig',
     'account.apps.accountConfig',
     'users.apps.usersConfig',
 
@@ -101,6 +102,12 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.10/topics/email/
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# Authentication Model
+# https://docs.djangoproject.com/en/1.10/ref/settings/#auth-user-model
+
+AUTH_USER_MODEL = 'core.User'
 
 
 # Password validation

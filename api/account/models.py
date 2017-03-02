@@ -7,13 +7,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.mail import send_mail
 
 
 # Create your models here.
 class ConfirmMail(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     new_mail = models.EmailField()
     nonce = models.CharField(max_length=68, blank=True)  # Allow Blank because nonce is generated when saving
     created = models.DateTimeField(auto_now_add=True)

@@ -4,14 +4,14 @@ from rest_framework import exceptions
 
 from random import randint
 
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Post(models.Model):
     def generate_nonce():
         return randint(10**7, 10**8-1)
 
-    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='%(app_label)s_%(class)s')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='%(app_label)s_%(class)s')
     nonce = models.IntegerField(default=generate_nonce)  # To prevent malicious users from trying pk's
     created = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
@@ -19,8 +19,8 @@ class Post(models.Model):
 
     # Post stack
     stack_count = models.IntegerField()  # Cards available to be assigned
-    stack_assigned = models.ManyToManyField(User, db_index=True, related_name='%(app_label)s_%(class)s_assigned')
-    stack_done = models.ManyToManyField(User, db_index=True, related_name='%(app_label)s_%(class)s_done')
+    stack_assigned = models.ManyToManyField(settings.AUTH_USER_MODEL, db_index=True, related_name='%(app_label)s_%(class)s_assigned')
+    stack_done = models.ManyToManyField(settings.AUTH_USER_MODEL, db_index=True, related_name='%(app_label)s_%(class)s_done')
 
     stack_size = 10  # Maimum cards to assign to one user
 
@@ -105,7 +105,7 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
-    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='%(app_label)s_%(class)s')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='%(app_label)s_%(class)s')
     created = models.DateTimeField(auto_now_add=True)
     text = models.TextField()
 
