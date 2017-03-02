@@ -18,6 +18,45 @@ ALLOWED_HOSTS = ['api.wildfyre.net', ]
 ADMINS = [('Info-Screen Webmaster', 'webmaster@Info-Screen.me')]
 
 
+# Logging
+# https://docs.djangoproject.com/en/1.10/ref/settings/#logging
+
+LOG_BASE_PATH = '/var/log/api/'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(funcName)s:%(lineno)d ~ %(message)s'
+        },
+    },
+    'handlers': {
+        'fileInfo': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'default',
+            'filename': LOG_BASE_PATH + 'info.log',
+        },
+        'fileWarning': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'formatter': 'default',
+            'filename': LOG_BASE_PATH + 'warning.log',
+        },
+        'fileError': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'formatter': 'default',
+            'filename': LOG_BASE_PATH + '/error.log',
+        },
+    },
+    'root': {
+        'handlers': ['fileInfo', 'fileWarning', 'fileError', ],
+        'level': 'INFO',
+    },
+}
+
+
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
