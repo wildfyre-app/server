@@ -23,13 +23,6 @@ When a user doesn't have a profile, make a `POST` request to `/users/`,
 with the required data.
 
 
-Delete
-------
-
-To delete the users profile make a `DELETE` request to `/users/`.
-This will delete the whole profile, including the avatar.
-
-
 
 Other Users Profile
 ===================
@@ -40,7 +33,3 @@ Which you can get from his posts or comments.
 
 You can't edit the profile of another user.
 Even when you access your own profile using the id, you can't edit it.
-
-..note::
-    Not every person has a profile. Just because you get a 404 when requesting
-    a users profile, it doesn't mean the user doesn't exist.

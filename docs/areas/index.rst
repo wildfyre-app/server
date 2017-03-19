@@ -14,8 +14,9 @@ Areas are where the magic happens.
 
 Available Areas
 ===============
-* Fun (`/areas/fun/`)
-* Information (`/areas/information/`)
+
+To get all available areas make a `GET` request to `/areas/`.
+A list of all available areas will be returned.
 
 .. note::
-    Later the list of available areas will be retrivable by api
+    In the future there might be areas, that not every user can see.

@@ -2,6 +2,9 @@
 Authentication
 ==============
 
+.. note::
+    You SHOULD authenticate every request, when a user is logged in.
+
 We use token based authentication. To authenticate a user add an `Authorization`
 header with the value `token <token>` where `<token>` is the users token
 

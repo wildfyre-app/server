@@ -5,7 +5,7 @@ Posts
 Create Post
 ===========
 
-To create a new Post, make a `POST` request to `/areas/<area>/posts/` and provid
+To create a new Post, make a `POST` request to `/areas/<area>/` and provid
 the required data.
 
 
@@ -16,34 +16,34 @@ Every user has a stack of assigned posts. The application SHOULD preload them
 if possible, and serve the user an already preloaded post.
 
 To refill and retrive the users post make an :doc:`authenticated <../auth>`
-`GET` request to `/areas/<area>/posts/`
+`GET` request to `/areas/<area>/`
 
 
 Own Posts
 ==============
 
-To list all the own posts, make a `GET` request to `/areas/<area>/posts/own/`
+To list all the own posts, make a `GET` request to `/areas/<area>/own/`
 
 
 Delete
 ------
 
 To delete on of the cards from a user make an :doc:`authenticated <../auth>`
-`DELETE` request to `/areas/<area>/posts/<id>`.
+`DELETE` request to `/areas/<area>/<id>`.
 
 
 View Post
 =========
 
 To view one Post in detail, no matter if the user has the card in his stack,
-or isn't even authenticated, make a `GET` request to `/areas/<area>/posts/<id>`.
+or isn't even authenticated, make a `GET` request to `/areas/<area>/<id>`.
 
 
 Spread
 ======
 
 To remove a post from the users stack and spread or skip it make a
-`POST` request to `/areas/<area>/posts/<id>/spread/<spread>/`,
+`POST` request to `/areas/<area>/<id>/spread/<spread>/`,
 where spread is eighter 1, to spread the post, or 2, to skip the post.
 
 To spread or skip a post you need to have the card in your stack.

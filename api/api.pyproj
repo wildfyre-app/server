@@ -45,72 +45,27 @@
     <Compile Include="api\app_settings.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="areas\base\posts\permissions.py">
+    <Compile Include="areas\admin.py" />
+    <Compile Include="areas\apps.py" />
+    <Compile Include="areas\migrations\__init__.py" />
+    <Compile Include="areas\models.py" />
+    <Compile Include="areas\options.py" />
+    <Compile Include="areas\permissions.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="areas\base\posts\urls.py">
+    <Compile Include="areas\registry.py" />
+    <Compile Include="areas\serializers.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="areas\base\rep\admin.py" />
-    <Compile Include="areas\base\rep\apps.py" />
-    <Compile Include="areas\base\rep\migrations\__init__.py" />
-    <Compile Include="areas\base\rep\models.py" />
-    <Compile Include="areas\base\rep\serializers.py" />
-    <Compile Include="areas\base\rep\urls.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="areas\base\rep\views.py" />
-    <Compile Include="areas\base\rep\__init__.py" />
-    <Compile Include="areas\base\urls.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="areas\base\__init__.py" />
-    <Compile Include="areas\fun\posts\admin.py" />
-    <Compile Include="areas\fun\posts\apps.py" />
-    <Compile Include="areas\fun\posts\migrations\__init__.py" />
-    <Compile Include="areas\fun\posts\models.py" />
-    <Compile Include="areas\fun\posts\serializers.py" />
-    <Compile Include="areas\fun\posts\tests.py" />
-    <Compile Include="areas\fun\posts\urls.py" />
-    <Compile Include="areas\fun\posts\views.py" />
-    <Compile Include="areas\fun\posts\__init__.py" />
-    <Compile Include="areas\fun\rep\admin.py" />
-    <Compile Include="areas\fun\rep\apps.py" />
-    <Compile Include="areas\fun\rep\migrations\__init__.py" />
-    <Compile Include="areas\fun\rep\models.py" />
-    <Compile Include="areas\fun\rep\serializers.py" />
-    <Compile Include="areas\fun\rep\tests.py" />
-    <Compile Include="areas\fun\rep\urls.py" />
-    <Compile Include="areas\fun\rep\views.py" />
-    <Compile Include="areas\fun\rep\__init__.py" />
-    <Compile Include="areas\fun\urls.py" />
-    <Compile Include="areas\fun\__init__.py" />
-    <Compile Include="areas\information\posts\admin.py" />
-    <Compile Include="areas\information\posts\apps.py" />
-    <Compile Include="areas\information\posts\migrations\__init__.py" />
-    <Compile Include="areas\information\posts\models.py" />
-    <Compile Include="areas\information\posts\serializers.py" />
-    <Compile Include="areas\information\posts\tests.py" />
-    <Compile Include="areas\information\posts\urls.py" />
-    <Compile Include="areas\information\posts\views.py" />
-    <Compile Include="areas\information\posts\__init__.py" />
-    <Compile Include="areas\information\rep\admin.py" />
-    <Compile Include="areas\information\rep\apps.py" />
-    <Compile Include="areas\information\rep\migrations\__init__.py" />
-    <Compile Include="areas\information\rep\models.py" />
-    <Compile Include="areas\information\rep\serializers.py" />
-    <Compile Include="areas\information\rep\tests.py" />
-    <Compile Include="areas\information\rep\urls.py" />
-    <Compile Include="areas\information\rep\views.py" />
-    <Compile Include="areas\information\rep\__init__.py" />
-    <Compile Include="areas\information\urls.py" />
-    <Compile Include="areas\information\__init__.py" />
-    <Compile Include="areas\urls.py">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="areas\tests.py" />
+    <Compile Include="areas\urls.py" />
+    <Compile Include="areas\views.py" />
     <Compile Include="areas\__init__.py" />
     <Compile Include="core\admin.py" />
     <Compile Include="core\apps.py" />
+    <Compile Include="core\areas.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="core\migrations\__init__.py" />
     <Compile Include="core\models.py" />
     <Compile Include="core\tests.py" />
@@ -121,15 +76,6 @@
     <Compile Include="api\settings.py" />
     <Compile Include="api\urls.py" />
     <Compile Include="api\wsgi.py" />
-    <Compile Include="areas\base\posts\admin.py" />
-    <Compile Include="areas\base\posts\apps.py" />
-    <Compile Include="areas\base\posts\migrations\__init__.py" />
-    <Compile Include="areas\base\posts\models.py" />
-    <Compile Include="areas\base\posts\serializers.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="areas\base\posts\views.py" />
-    <Compile Include="areas\base\posts\__init__.py" />
     <Compile Include="production.dist.py">
       <SubType>Code</SubType>
     </Compile>
@@ -158,28 +104,9 @@
     <Folder Include="account\templates\" />
     <Folder Include="account\templates\account\" />
     <Folder Include="api\" />
-    <Folder Include="areas\base\" />
-    <Folder Include="areas\base\posts\" />
-    <Folder Include="areas\base\posts\migrations\" />
-    <Folder Include="areas\base\rep\" />
-    <Folder Include="areas\base\rep\migrations\" />
-    <Folder Include="areas\base\rep\templates\" />
-    <Folder Include="areas\base\posts\templates\" />
-    <Folder Include="areas\fun\" />
-    <Folder Include="areas\fun\posts\" />
-    <Folder Include="areas\fun\posts\migrations\" />
-    <Folder Include="areas\fun\posts\templates\" />
-    <Folder Include="areas\fun\rep\" />
-    <Folder Include="areas\fun\rep\migrations\" />
-    <Folder Include="areas\fun\rep\templates\" />
-    <Folder Include="areas\information\" />
-    <Folder Include="areas\information\posts\" />
-    <Folder Include="areas\information\posts\migrations\" />
-    <Folder Include="areas\information\posts\templates\" />
-    <Folder Include="areas\information\rep\" />
-    <Folder Include="areas\information\rep\migrations\" />
-    <Folder Include="areas\information\rep\templates\" />
     <Folder Include="areas\" />
+    <Folder Include="areas\migrations\" />
+    <Folder Include="areas\templates\" />
     <Folder Include="core\" />
     <Folder Include="core\migrations\" />
     <Folder Include="templates\" />

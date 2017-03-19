@@ -1,7 +1,8 @@
 import django
 from django.urls import reverse
 from django.test import TestCase
-from rest_framework.test import APIRequestFactory, force_authenticate
+from rest_framework import status
+from rest_framework.test import APIRequestFactory, force_authenticate, APITestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 
@@ -31,48 +32,6 @@ class ProfileTest(TestCase):
         response = ProfileView.as_view()(request)
 
         self.assertEqual(response.status_code, 401)
-
-    def test_create_profile(self):
-        """
-        Create Profile for user via post.
-        Should respond with status code 201: Created
-        """
-        request = self.factory.post(reverse('users:profile'), {'bio': "Hi this is my bio"})
-        force_authenticate(request, self.user1)
-        response = ProfileView.as_view()(request)
-
-        self.assertEqual(response.status_code, 201)
-
-    def test_create_secound_profile(self):
-        """
-        Users may only have one profile
-        Should respond with status code 400: Bad Request
-        """
-        request = self.factory.post(reverse('users:profile'), {'bio': "Hi this is my bio"})
-        force_authenticate(request, self.user2_profile)
-        response = ProfileView.as_view()(request)
-
-        self.assertEqual(response.status_code, 400)
-
-    def test_send_additional_parameters(self):
-        """
-        Sending additional parameters should have no effect.
-        Trying here with id and user as these must not be used from the request
-        """
-        bio = "test_send_additional_parameters"  # Used to identify object
-        request = self.factory.post(
-            reverse('users:profile'),
-            {'bio': bio, 'user': self.user2_profile, 'id': -1})
-        force_authenticate(request, self.user1)
-        response = ProfileView.as_view()(request)
-
-        profile1 = Profile.objects.get(bio=bio)
-
-        # Object should still be created ...
-        self.assertEqual(response.status_code, 201)
-        # ... but unnessesary parms should be ignored
-        self.assertEqual(profile1.user, self.user1)
-        self.assertNotEqual(profile1.id, -1)
 
 class UserProfileTest(TestCase):
     def setUp(self):
@@ -113,3 +72,44 @@ class UserProfileTest(TestCase):
         response = UserProfileView.as_view()(request, user=self.user1.pk)
 
         self.assertEqual(response.status_code, 405)
+
+
+class ProfileAutoCreateTest(APITestCase):
+    def setUp(self):
+        # Test User
+        self.user1 = get_user_model().objects.create_user(
+            username='user1', email='user1@example.invalid', password='secret')
+
+        self.user2 = get_user_model().objects.create_user(
+            username='user2', email='user2@example.invalid', password='secret')
+
+    def test_own(self):
+        """
+        Create profile when accessing ProfileView
+        """
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('users:profile'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Profile.objects.all().filter(user=self.user1).exists())
+
+    def test_other(self):
+        
+        """
+        Create profile when accessing UserProfileView
+        """
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('users:profile', kwargs={'user': self.user2.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Profile.objects.all().filter(user=self.user2).exists())
+
+    def test_own_by_id(self):
+        """
+        Create profile when accessing self in UserProfileView
+        """
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('users:profile', kwargs={'user': self.user1.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Profile.objects.all().filter(user=self.user1).exists())

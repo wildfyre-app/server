@@ -18,5 +18,5 @@ Delete Comment
 ==============
 
 To delete a comment make a `DELETE` request to
-`/areas/<area>/posts/<post_id>/<comment_id>`. The comment id is shown on the
+`/areas/<area>/<post_id>/<comment_id>`. The comment id is shown on the
 post's detail page

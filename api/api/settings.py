@@ -45,14 +45,7 @@ INSTALLED_APPS = [
     'core.apps.coreConfig',
     'account.apps.accountConfig',
     'users.apps.usersConfig',
-
-    # Areas:
-    # Fun
-    'areas.fun.posts.apps.postsConfig',
-    'areas.fun.rep.apps.reputationConfig',
-    # Information
-    'areas.information.posts.apps.postsConfig',
-    'areas.information.rep.apps.reputationConfig',
+    'areas.apps.areasConfig',  # Add Areas at the end
 ]
 
 MIDDLEWARE = [
