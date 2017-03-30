@@ -24,6 +24,8 @@ class Post(models.Model):
     stack_assigned = models.ManyToManyField(settings.AUTH_USER_MODEL, db_index=True, related_name='%(class)s_assigned')
     stack_done = models.ManyToManyField(settings.AUTH_USER_MODEL, db_index=True, related_name='%(class)s_done')
 
+    subscriber = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='%(class)s_subscriber')
+
     def __str__(self):
         return self.get_uri_key()
 
@@ -65,19 +67,16 @@ class Post(models.Model):
         self.save()
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        new = self.pk is None
+
         if self.area not in registry.areas:
             raise ValueError("'%s' is not a valid Area" % self.area)
-
-        if not self.stack_outstanding:
-            # New card.
+        if new:
             self.stack_outstanding = self.get_spread(self.area, self.author)
-            new = True
-        else:
-            new = False
-
         super().save(force_insert, force_update, using, update_fields)
         if new:
-            self.stack_done.add(self.author)  # Has to happen after first save.
+            self.stack_done.add(self.author)
+            self.subscriber.add(self.author)
 
     @staticmethod
     def get_spread(area, user):
@@ -95,6 +94,16 @@ class Comment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created = models.DateTimeField(auto_now_add=True)
     text = models.TextField()
+
+    unread = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='%(class)s_unread')
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        new = self.pk is None
+        super().save(force_insert, force_update, using, update_fields)
+        if new:
+            self.post.subscriber.add(self.author.pk)  # Ensure comment author is subscribed
+            subscriber = self.post.subscriber.exclude(pk=self.author.pk)
+            self.unread.add(*subscriber)
 
 
 class Reputation(models.Model):

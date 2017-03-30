@@ -372,6 +372,122 @@ class SpreadTest(APITestCase):
 
 
 @unittest.skipUnless(registry.areas, "No areas defined")
+class NotificationTest(APITestCase):
+    def setUp(self):
+        # Area to test with, use first area
+        self.area = list(registry.areas)[0]
+        # Test User
+        self.user = get_user_model().objects.create_user(
+            username='user', password='secret')
+
+        self.user_author = get_user_model().objects.create_user(
+            username='author', password='secret')
+
+        # Test Posts
+        postModel = registry.get_area(self.area).Post()
+        self.post = postModel.objects.create(author=self.user_author, text="Hi there")
+
+    def post_comment(self):
+        comment_model = registry.get_area(self.area).comment_model
+        # Ensure unique text (yes this is a do while)
+        while True:
+            text = "NotificationTest.post_comment_" + str(randint(0, 10**10))
+            if not comment_model.objects.filter(text=text).exists():
+                break
+
+        self.client.force_authenticate(user=self.user)
+        self.client.post(
+            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            {'text': text})
+
+        return comment_model.objects.get(author=self.user, text=text)
+
+    def test_notification_not_authenticated(self):
+        """
+        Unauthenticated users don't have notifications (obviously)
+        """
+        response = self.client.get(reverse('areas:notification'))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_subscribe_not_authenticated(self):
+        """
+        Unautenticated users don't need to subscribe
+        """
+        response = self.client.post(reverse(
+            'areas:subscribe',
+            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            ))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_subscribe(self):
+        """
+        Subscribe to a post
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(reverse(
+            'areas:subscribe',
+            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            ), {'subscribe': 1})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(self.user in self.post.subscriber.all())
+
+    def test_unsubscribe(self):
+        """
+        Unsubscribe from a post
+        """
+        self.post.subscriber.add(self.user)
+        self.assertTrue(self.user in self.post.subscriber.all())  # Check
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(reverse(
+            'areas:subscribe',
+            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            ), {'subscribe': 0})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(self.user in self.post.subscriber.all())
+
+    def test_auto_subscribe_post(self):
+        """
+        Auto subscribe, when posting the card
+        """
+        # As self.post has the autor self.user_author, he should be subscribed
+        self.assertTrue(self.user_author in self.post.subscriber.all())
+
+    def test_auto_subscribe_comment(self):
+        """
+        Auto subscribe, when posting a comment
+        """
+        self.post_comment()
+        self.assertTrue(self.user in self.post.subscriber.all())
+
+    def test_notifications(self):
+        """
+        Get Notifications
+        """
+        comment = self.post_comment()
+
+        self.assertTrue(comment in self.user_author.comment_unread.all())
+
+    def test_mark_read(self):
+        """
+        Mark Notifications read
+        """
+        comment = self.post_comment()
+
+        self.client.force_authenticate(user=self.user_author)
+        self.client.get(reverse(
+            'areas:detail',
+            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            ))
+
+        self.assertFalse(comment in self.user_author.comment_unread.all())
+
+
+@unittest.skipUnless(registry.areas, "No areas defined")
 class ReputationTest(APITestCase):
     def setUp(self):
         # Area to test with, use first area

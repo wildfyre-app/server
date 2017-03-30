@@ -10,6 +10,7 @@ Areas are where the magic happens.
 
     posts
     comments
+    notifications
     rep
 
 Available Areas

@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
 
 from . import serializers
 from .permissions import IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack
@@ -12,6 +13,14 @@ class AreaView(generics.ListAPIView):
 
     def get_queryset(self):
         return registry.areas.values()
+
+
+class NotificationView(generics.ListAPIView):
+    serializer_class = serializers.NotificationSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return self.request.user.comment_unread
 
 
 class QueueView(generics.ListCreateAPIView):
@@ -52,6 +61,11 @@ class DetailView(generics.RetrieveDestroyAPIView):
     Retrive a specific post or post a comment
     """
     permission_classes = (IsOwnerOrReadCreateOnly, permissions.IsAuthenticatedOrReadOnly)
+
+    def get(self, request, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            registry.get_area(self.kwargs.get('area')).mark_read(self.request.user, self.get_object())
+        return super().get(request, *args, **kwargs)
 
     def get_serializer_class(self):
         area = registry.get_area(self.kwargs.get('area'))
@@ -152,7 +166,47 @@ class SpreadView(views.APIView):
         obj.stack_assigned.remove(request.user)
         obj.save()
 
-        serializer = self.get_serializer_class()(obj)
+        serializer = self.get_serializer_class()(obj, context={'request': request})
+        return Response(serializer.data)
+
+
+class SubscribeView(views.APIView):
+    """
+    Subscribe / Unsubscribe to a post
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_serializer_class(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.post_serializer
+
+    def get_queryset(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.Post().objects.all()
+
+    def filter_queryset(self, queryset):
+        return queryset
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        pk = self.kwargs.get('pk')
+        nonce = self.kwargs.get('nonce')
+
+        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def post(self, request, area, pk, nonce):
+        obj = self.get_object()
+
+        subscribe = request.POST.get('subscribe', "true").lower() not in ["false", "0", "f", "n"]
+        if subscribe:
+            obj.subscriber.add(request.user)
+        else:
+            obj.subscriber.remove(request.user)
+
+        serializer = self.get_serializer_class()(obj, context={'request': request})
         return Response(serializer.data)
 
 

@@ -22,6 +22,13 @@ class Area:
 
     spread_min = 4                              # Minimum Spread of a user
 
+    @classmethod
+    def mark_read(cls, user, post):
+        """
+        Mark Post as read
+        """
+        user.comment_unread.remove(*user.comment_unread.filter(post=post))
+
     # Proxy Model
     _post_proxy = None
 
