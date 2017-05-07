@@ -50,8 +50,7 @@ class AccountSerializer(serializers.ModelSerializer):
 
         if validated_data.get('email') is not None:
             new_mail = validated_data.get('email')
-            confirm_mail = ConfirmMail(user=user, new_mail=new_mail)
-            confirm_mail.save()
+            ConfirmMail.objects.create(user=user, new_mail=new_mail)
 
             validated_data['email'] = instance.email  # Do not chage mail
 

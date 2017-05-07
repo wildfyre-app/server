@@ -2,6 +2,7 @@ from random import randint
 
 from django.conf import settings
 from django.db import models
+from django.db.models import F
 
 from .registry import registry
 
@@ -62,9 +63,10 @@ class Post(models.Model):
         return stack
 
     def assign_user(self, user):
-        self.stack_outstanding -= 1
+        self.stack_outstanding = F('stack_outstanding') - 1
         self.stack_assigned.add(user)
         self.save()
+        self.refresh_from_db()
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         new = self.pk is None

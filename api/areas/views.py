@@ -2,6 +2,7 @@ from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from django.db.models import F
 
 from . import serializers
 from .permissions import IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack
@@ -159,7 +160,7 @@ class SpreadView(views.APIView):
 
         # Handle Spread
         if spread is '1':
-            obj.stack_outstanding += obj.get_spread(area, self.request.user)
+            obj.stack_outstanding = F('stack_outstanding') + obj.get_spread(area, self.request.user)
 
         # Remove from stack
         obj.stack_done.add(request.user)
