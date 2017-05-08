@@ -62,11 +62,11 @@ LOGGING = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'api',
         'USER': 'api',
         'PASSWORD': '',  # Set password
-        'HOST': '127.0.0.1',
+        'HOST': '',
         'PORT': '',
     }
 }
