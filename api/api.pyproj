@@ -31,7 +31,6 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="account\admin.py" />
     <Compile Include="account\apps.py" />
     <Compile Include="account\migrations\__init__.py" />
     <Compile Include="account\models.py" />
