@@ -67,8 +67,6 @@
     </Compile>
     <Compile Include="core\migrations\__init__.py" />
     <Compile Include="core\models.py" />
-    <Compile Include="core\tests.py" />
-    <Compile Include="core\views.py" />
     <Compile Include="core\__init__.py" />
     <Compile Include="flags\admin.py" />
     <Compile Include="flags\apps.py" />
