@@ -14,10 +14,11 @@ Welcome to the WildFyre API documentation!
     auth
     areas/index
     account
+    flag
     users
 
 
-This is the offical WildFyre API documentation. Intended for the WildFyre
+This is the official WildFyre API documentation. Intended for the WildFyre
 client developers, and anyone, who want to integrate his service into WildFyre.
 
 
@@ -38,7 +39,7 @@ in `RFC 2119 <https://tools.ietf.org/html/rfc2119>`_.
 
     * You MUST NOT use the api, to do any harm to our servers.
     * You MUST NOT use the api, to send a massive amount of data to our servers.
-    * You MUST NOT use the api, to send SPAM or simmilar annoying content.
+    * You MUST NOT use the api, to send SPAM or similar annoying content.
     * You MUST NOT use the api, to spread hate.
     * You MUST NOT use the api, to spread pornographic content.
     * You MUST NOT use the api, to spread illegal content.

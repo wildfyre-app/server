@@ -16,4 +16,7 @@ urlpatterns = [
     url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/spread/(?P<spread>0|1)/$', views.SpreadView.as_view(), name='spread'),
 
     url(r'^(?P<area>[a-z]*)/rep/$', views.ReputationView.as_view(), name='reputation'),
+
+    url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/flag/$', views.FlagPostView.as_view(), name='flag'),
+    url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/(?P<comment>[0-9]+)/flag/$', views.FlagCommentView.as_view(), name='flag'),
 ]

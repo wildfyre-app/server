@@ -5,7 +5,7 @@ Posts
 Create Post
 ===========
 
-To create a new Post, make a `POST` request to `/areas/<area>/` and provid
+To create a new Post, make a `POST` request to `/areas/<area>/` and provide
 the required data.
 
 
@@ -15,7 +15,7 @@ Getting Posts
 Every user has a stack of assigned posts. The application SHOULD preload them
 if possible, and serve the user an already preloaded post.
 
-To refill and retrive the users post make an :doc:`authenticated <../auth>`
+To refill and retrieve the users post make an :doc:`authenticated <../auth>`
 `GET` request to `/areas/<area>/`
 
 
@@ -44,6 +44,6 @@ Spread
 
 To remove a post from the users stack and spread or skip it make a
 `POST` request to `/areas/<area>/<id>/spread/<spread>/`,
-where spread is eighter 1, to spread the post, or 2, to skip the post.
+where spread is either 1, to spread the post, or 2, to skip the post.
 
 To spread or skip a post you need to have the card in your stack.

@@ -5,8 +5,11 @@ from django.contrib.auth import get_user_model
 from django.db.models import F
 
 from . import serializers
-from .permissions import IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack
+from .permissions import (IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack,
+                          CanFlagPost, CanFlagComment)
 from .registry import registry
+
+from flags.serializers import FlagSerializer
 
 
 class AreaView(generics.ListAPIView):
@@ -224,3 +227,58 @@ class ReputationView(generics.RetrieveAPIView):
 
         self.check_object_permissions(self.request, obj)
         return obj
+
+
+class FlagPostView(generics.CreateAPIView):
+    """
+    Flag Post
+    """
+    serializer_class = FlagSerializer
+    permission_classes = (permissions.IsAuthenticated, CanFlagPost)
+
+    def get_queryset(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.Post().objects.all()
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        pk = self.kwargs.get('pk')
+        nonce = self.kwargs.get('nonce')
+
+        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def perform_create(self, serializer):
+        post = self.get_object()
+        serializer.save(obj=post, reporter=self.request.user)
+
+
+class FlagCommentView(generics.CreateAPIView):
+    """
+    Flag Comment
+    """
+    serializer_class = FlagSerializer
+    permission_classes = (permissions.IsAuthenticated, CanFlagComment)
+
+    def get_queryset(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.Post().objects.all()
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        post = self.kwargs.get('pk')
+        nonce = self.kwargs.get('nonce')
+        comment = self.kwargs.get('comment')
+
+        post = get_object_or_404(queryset, pk=post, nonce=nonce)
+        obj = get_object_or_404(post.comment_set.all(), pk=comment)
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def perform_create(self, serializer):
+        comment = self.get_object()
+        serializer.save(obj=comment, reporter=self.request.user)

@@ -32,3 +32,19 @@ class IsInStack(permissions.BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         return obj.stack_assigned.filter(pk=request.user.pk).exists()
+
+
+class CanFlagPost(permissions.BasePermission):
+    """
+    Check if user is allowed to flag post
+    """
+    def has_object_permission(self, request, view, obj):
+        return True
+
+
+class CanFlagComment(permissions.BasePermission):
+    """
+    Check if user is allowed to flag comment
+    """
+    def has_object_permission(self, request, view, obj):
+        return True

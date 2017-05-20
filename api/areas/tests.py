@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from .registry import registry
 from .views import *
 from .models import *
+from flags.models import Flag, FlagComment
 
 
 class AreasTest(APITestCase):
@@ -513,3 +514,54 @@ class ReputationTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(Reputation.objects.filter(area=self.area, user=self.user).exists())
+
+
+@unittest.skipUnless(registry.areas, "No areas defined")
+class FlagTest(APITestCase):
+    def setUp(self):
+        # Area to test with, use first area
+        self.area = list(registry.areas)[0]
+        # Test User
+        self.author = get_user_model().objects.create_user(
+            username='author', password='secret')
+        self.reporter = get_user_model().objects.create_user(
+            username='reporter', password='secret')
+
+        # Test Post and Comment
+        self.post = Post.objects.create(area=self.area, author=self.author)
+        self.comment = self.post.comment_set.create(author=self.author)
+
+    def test_not_authenticated(self):
+        """
+        Unauthenticated users may not falg content
+        """
+        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+                                    {'reason': Flag.Reason.SPAM.value})
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+    def test_flag_post(self):
+        """
+        Flag a post
+        """
+        self.client.force_authenticate(user=self.reporter)
+        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+                                    {'reason': Flag.Reason.SPAM.value})
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        flag = Flag.objects.filter(object_id=self.post.pk)
+        self.assertTrue(flag.exists())
+        self.assertTrue(flag.get().comment_set.filter(reporter=self.reporter).exists())
+
+    def test_flag_comment(self):
+        """
+        Flag a comment
+        """
+        self.client.force_authenticate(user=self.reporter)
+        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'comment': self.comment.pk}),
+                                    {'reason': Flag.Reason.SPAM.value})
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        flag = Flag.objects.filter(object_id=self.comment.pk)
+        self.assertTrue(flag.exists())
+        self.assertTrue(flag.get().comment_set.filter(reporter=self.reporter).exists())
