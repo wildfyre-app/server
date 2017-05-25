@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 
     'core.apps.coreConfig',
     'account.apps.accountConfig',
+    'bans.apps.bansConfig',
     'users.apps.usersConfig',
     'flags.apps.flagsConfig',
     'areas.apps.areasConfig',  # Add Areas at the end

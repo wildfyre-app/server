@@ -6,7 +6,7 @@ from django.db.models import F
 
 from . import serializers
 from .permissions import (IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack,
-                          CanFlagPost, CanFlagComment)
+                          MayPost, MayComment, MayFlagPost, MayFlagComment)
 from .registry import registry
 
 from flags.serializers import FlagSerializer
@@ -31,7 +31,7 @@ class QueueView(generics.ListCreateAPIView):
     """
     Retrive queue or post new.
     """
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, MayPost)
 
     def get_serializer_class(self):
         area = registry.get_area(self.kwargs.get('area'))
@@ -64,7 +64,7 @@ class DetailView(generics.RetrieveDestroyAPIView):
     """
     Retrive a specific post or post a comment
     """
-    permission_classes = (IsOwnerOrReadCreateOnly, permissions.IsAuthenticatedOrReadOnly)
+    permission_classes = (IsOwnerOrReadCreateOnly, permissions.IsAuthenticatedOrReadOnly, MayComment)
 
     def get(self, request, *args, **kwargs):
         if self.request.user.is_authenticated:
@@ -234,7 +234,7 @@ class FlagPostView(generics.CreateAPIView):
     Flag Post
     """
     serializer_class = FlagSerializer
-    permission_classes = (permissions.IsAuthenticated, CanFlagPost)
+    permission_classes = (permissions.IsAuthenticated, MayFlagPost)
 
     def get_queryset(self):
         area = registry.get_area(self.kwargs.get('area'))
@@ -260,7 +260,7 @@ class FlagCommentView(generics.CreateAPIView):
     Flag Comment
     """
     serializer_class = FlagSerializer
-    permission_classes = (permissions.IsAuthenticated, CanFlagComment)
+    permission_classes = (permissions.IsAuthenticated, MayFlagComment)
 
     def get_queryset(self):
         area = registry.get_area(self.kwargs.get('area'))

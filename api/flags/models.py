@@ -5,12 +5,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 
-
-# Reson should be available in Flag and FlagComment
-class Reason(Enum):
-        RUDE = 1
-        SPAM = 2
-        TOPIC = 3
+from bans.models import Reason, REASON_CHOICES
 
 
 class Flag(models.Model):
@@ -60,13 +55,7 @@ class Flag(models.Model):
 
 class FlagComment(models.Model):
     Reason = Reason
-
-    REASON_CHOICES = (
-        (Reason.RUDE.value, 'Rude'),
-        (Reason.SPAM.value, 'Spam'),
-        (Reason.TOPIC.value, 'Offtopic (Wrong area)'),
-        (None, 'Other (Please explain)'),
-    )
+    REASON_CHOICES = REASON_CHOICES
 
     object = models.ForeignKey(Flag, on_delete=models.CASCADE, related_name='comment_set')
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL)

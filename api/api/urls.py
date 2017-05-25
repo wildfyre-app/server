@@ -17,7 +17,8 @@ urlpatterns = [
 
     url(r'^admin/', admin.site.urls),
     url(r'^account/', include('account.urls')),
-    url(r'areas/', include('areas.urls')),
+    url(r'^areas/', include('areas.urls')),
+    url(r'^bans/', include('bans.urls')),
     url(r'^users/', include('users.urls')),
     url(r'^browse/auth/', include('rest_framework.urls')),
 ]

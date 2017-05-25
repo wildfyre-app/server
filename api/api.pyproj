@@ -60,6 +60,15 @@
     <Compile Include="areas\urls.py" />
     <Compile Include="areas\views.py" />
     <Compile Include="areas\__init__.py" />
+    <Compile Include="bans\admin.py" />
+    <Compile Include="bans\apps.py" />
+    <Compile Include="bans\migrations\__init__.py" />
+    <Compile Include="bans\models.py" />
+    <Compile Include="bans\serializers.py" />
+    <Compile Include="bans\tests.py" />
+    <Compile Include="bans\urls.py" />
+    <Compile Include="bans\views.py" />
+    <Compile Include="bans\__init__.py" />
     <Compile Include="core\admin.py" />
     <Compile Include="core\apps.py" />
     <Compile Include="core\areas.py">
@@ -115,6 +124,9 @@
     <Folder Include="areas\" />
     <Folder Include="areas\migrations\" />
     <Folder Include="areas\templates\" />
+    <Folder Include="bans\" />
+    <Folder Include="bans\migrations\" />
+    <Folder Include="bans\templates\" />
     <Folder Include="core\" />
     <Folder Include="core\migrations\" />
     <Folder Include="flags\" />
