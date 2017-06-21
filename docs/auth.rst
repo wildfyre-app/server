@@ -25,7 +25,7 @@ Retrive the Token
 To retrive the token of a user, make a `POST` request to `/account/auth/`
 with the username and password::
 
-    PATCH /account/auth/ HTTP/1.1
+    POST /account/auth/ HTTP/1.1
     Host: api.wildfyre.net
     Content-Type: application/json
 
