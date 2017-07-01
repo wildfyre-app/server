@@ -39,6 +39,17 @@ To change the email and/or the password do a `PATCH` request::
     an email is sent to the new address requesting the confirmation.
 
 
+Registration
+============
+
+If a new User want's an account he needs to register.
+Registration is done with a POST request to the `/account/register/` endpoint.
+Registration requires a captcha.
+
+.. note::
+  At the moment registration MUST only be done through WildFyre websites.
+
+
 Authentication
 ==============
 

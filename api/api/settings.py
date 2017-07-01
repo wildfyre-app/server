@@ -135,6 +135,13 @@ REST_FRAMEWORK = {
 }
 
 
+# reCAPTCHA secret key
+# https://www.google.com/recaptcha/admin
+# https://developers.google.com/recaptcha/docs/faq
+
+RECAPTCHA_SECRET = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+
+
 # CORS Settings
 # https://github.com/ottoyiu/django-cors-headers
 

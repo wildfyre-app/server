@@ -1,4 +1,6 @@
+import requests
 from rest_framework import serializers
+from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
 from django.core import exceptions
@@ -8,11 +10,20 @@ from django.contrib.auth import get_user_model
 from .models import ConfirmMail
 
 
-class AccountSerializer(serializers.ModelSerializer):
+class BaseAccountSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     class Meta:
         model = get_user_model()
+
+    def validate_password(self, value):
+        # Validate password
+        validate_password(value)
+        return make_password(value)
+
+
+class ManageAccountSerializer(BaseAccountSerializer):
+    class Meta(BaseAccountSerializer.Meta):
         fields = ('id', 'username', 'email', 'password',)
         read_only_fields = ('username',)
 
@@ -22,7 +33,7 @@ class AccountSerializer(serializers.ModelSerializer):
         # region password
         password = attrs.get('password')
         if password is not None:
-            # Validate password and translate exceptions for rest framework
+            # Validate password against user
             errors = dict()
             try:
                 validate_password(password, user=user)
@@ -36,11 +47,9 @@ class AccountSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def update(self, instance, validated_data):
-        user = get_user_model().objects.get(username=instance.username)
+        user = get_user_model().objects.get(pk=instance.id)
 
         if validated_data.get('password') is not None:
-            validated_data['password'] = make_password(validated_data.get('password'))
-
             # Delete Token
             try:
                 user.auth_token.delete()
@@ -48,10 +57,37 @@ class AccountSerializer(serializers.ModelSerializer):
                 # When no token exists etc
                 pass
 
-        if validated_data.get('email') is not None:
-            new_mail = validated_data.get('email')
-            ConfirmMail.objects.create(user=user, new_mail=new_mail)
-
-            validated_data['email'] = instance.email  # Do not chage mail
+        email = validated_data.pop('email', None)
+        if email is not None:
+            ConfirmMail.objects.create(user=user, new_mail=email)
 
         return super().update(instance, validated_data)
+
+
+class RegisterAccountSerializer(BaseAccountSerializer):
+    captcha = serializers.CharField(write_only=True)
+
+    class Meta(BaseAccountSerializer.Meta):
+        fields = ('username', 'email', 'password', 'captcha')
+
+    def validate_captcha(self, value):
+        r = requests.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            data={
+                'secret': settings.RECAPTCHA_SECRET,
+                'response': value,
+            })
+
+        if not r.json()["success"]:
+            raise exceptions.ValidationError("Captcha Invalid")
+
+    def create(self, validated_data):
+        del validated_data["captcha"]  # Captcha response must not be passed to create method
+        email = validated_data.pop('email', None)
+
+        user = super().create(validated_data)
+
+        if email is not None:
+            ConfirmMail.objects.create(user=user, new_mail=email)
+
+        return user

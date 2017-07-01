@@ -1,3 +1,4 @@
+import unittest
 import django
 from django.urls import reverse
 
@@ -9,6 +10,8 @@ from .models import *
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from rest_framework import status
+from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
 from django.core import mail
 
@@ -99,3 +102,39 @@ class EmailTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIsNotNone(ConfirmMail.objects.get(user=self.user))
+
+
+@unittest.skipUnless(
+    settings.RECAPTCHA_SECRET == "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
+    "Can't bypass captcha when not using debug key")
+class RegisterTest(APITestCase):
+    def test_register(self):
+        """
+        Registration should be possible
+        """
+        response = self.client.post(
+            reverse('account:register'), {
+                'username': "testUser",
+                'email': "testUser@example.invalid",
+                'password': "password123",
+                'captcha': "captchaResult"  # Captcha checks never fail with test secret
+            })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(get_user_model().objects.filter(username="testUser").exists())
+        
+    def test_register_same_nick(self):
+        """
+        Every username only once
+        """
+        get_user_model().objects.create_user(username="user", email="user@example.invalid", password="secret")
+
+        response = self.client.post(
+            reverse('account:register'), {
+                'username': "user",
+                'email': "userAlt@example.invalid",
+                'password': "password123",
+                'captcha': "captchaResult"  # Captcha checks never fail with test secret
+            })
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

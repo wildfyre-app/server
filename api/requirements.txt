@@ -1,6 +1,7 @@
-Django==1.10.6
-django-cors-headers==2.0.2
-djangorestframework==3.5.4
+Django==1.11.2
+django-cors-headers==2.1.0
+djangorestframework==3.6.3
 olefile==0.44
-Pillow==4.0.0
+Pillow==4.1.1
 psycopg2==2.7.1
+requests==2.18.1

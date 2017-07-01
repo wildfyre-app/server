@@ -10,13 +10,20 @@ class AccountView(generics.RetrieveUpdateAPIView):
     """
     Retrive or edit account data
     """
-    serializer_class = serializers.AccountSerializer
+    serializer_class = serializers.ManageAccountSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self):
         obj = self.request.user
         self.check_object_permissions(self.request, obj)
         return obj
+
+
+class RegisterView(generics.CreateAPIView):
+    """
+    Register a new account
+    """
+    serializer_class = serializers.RegisterAccountSerializer
 
 
 def confirm_mail(request, pk, nonce):

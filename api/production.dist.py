@@ -86,6 +86,12 @@ EMAIL_SUBJECT_PREFIX = '[WildFyre] '
 DEFAULT_FROM_EMAIL = 'noreply@wildfyre.net'
 
 
+# reCAPTCHA secret key
+# https://www.google.com/recaptcha/admin
+
+RECAPTCHA_SECRET = ""
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
@@ -104,3 +110,7 @@ SECURE_SSL_REDIRECT = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
+
+
+# Ensure settings were ajusted
+raise NotImplementedError("Check production.py")
