@@ -10,7 +10,7 @@ A user will be automatically subscribed to all posts he created or commented on.
 View Notifications
 ==================
 
-To view notifications make an `GET` request to `/areas/notifications/`.
+To view notifications make an `GET` request to `/areas/notification/`.
 
 A list will be returned with all unread comments with their post's area and id
 
