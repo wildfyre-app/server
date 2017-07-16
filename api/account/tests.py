@@ -131,7 +131,7 @@ class RegisterTest(APITestCase):
 
         response = self.client.post(
             reverse('account:register'), {
-                'username': "user",
+                'username': "useR",  # Case insensitive
                 'email': "userAlt@example.invalid",
                 'password': "password123",
                 'captcha': "captchaResult"  # Captcha checks never fail with test secret

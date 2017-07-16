@@ -1,5 +1,6 @@
 import requests
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
@@ -11,6 +12,7 @@ from .models import ConfirmMail
 
 
 class BaseAccountSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(validators=[UniqueValidator(queryset=get_user_model().objects.all(), lookup='iexact')])
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     class Meta:
