@@ -13,7 +13,7 @@ urlpatterns = [
     url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/$', views.DetailView.as_view(), name='detail'),
     url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/(?P<comment>[0-9]+)/$', views.CommentView.as_view(), name='comment'),
     url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/subscribe/$', views.SubscribeView.as_view(), name='subscribe'),
-    url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/spread/(?P<spread>0|1)/$', views.SpreadView.as_view(), name='spread'),
+    url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/spread/$', views.SpreadView.as_view(), name='spread'),
 
     url(r'^(?P<area>[a-z]*)/rep/$', views.ReputationView.as_view(), name='reputation'),
 

@@ -24,26 +24,5 @@ Notifications are automatically marked read, when you view the respective post.
 Subscribe to a post
 ===================
 
-To subscribe to a post make a `POST` request to
+To update your subscription status of a post make a `PUT` request to
 `/areas/<area>/<post_id>/subscribe/`.
-
-Set subscribe eighter to:
-
-* true | 1 | t | y
-* false | 0 | f | n
-
-The value is case-insensitive.
-
-.. note::
-    When no value or an invalid value is specified for `subscribe`,
-    `true` is assumed.
-    This might change in the future
-
-You're request should look simmilar to this::
-
-    POST /areas/<area>/<id>/subscribe/ HTTP/1.1
-    Host: api.wildfyre.net
-    Authorization: token XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    Content-Type: application/x-www-form-urlencoded
-
-    subscribe=1

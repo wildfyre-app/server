@@ -31,10 +31,10 @@ class CommentSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='get_uri_key')
     author = ProfileSerializer(read_only=True, source='author.profile')
-    subscribed = serializers.SerializerMethodField('_subscribed')
+    subscribed = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True, source='comment_set')
 
-    def _subscribed(self, obj):
+    def get_subscribed(self, obj):
         user = self.context['request'].user
         return obj.subscriber.filter(pk=user.pk).exists()
 
@@ -42,6 +42,20 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ('id', 'author', 'subscribed', 'created', 'active', 'text', 'comments',)
         read_only_fields = ('created', 'active', 'subscribed')
+
+
+class SpreadSerializer(serializers.Serializer):
+    spread = serializers.BooleanField()
+
+    def create(self, validated_data):
+        return type("", (), dict(spread=validated_data.get('spread')))
+
+
+class SubscribeSerializer(serializers.Serializer):
+    subscribed = serializers.BooleanField()
+
+    def update(self, instance, validated_data):
+        return type("", (), dict(subscribed=validated_data.get('subscribed', instance.subscribed)))
 
 
 class ReputationSerializer(serializers.ModelSerializer):

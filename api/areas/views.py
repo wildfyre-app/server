@@ -131,24 +131,18 @@ class CommentView(generics.RetrieveDestroyAPIView):
         return obj
 
 
-class SpreadView(views.APIView):
+class SpreadView(generics.CreateAPIView):
     """
     Spread a card
     """
+    serializer_class = serializers.SpreadSerializer
     permission_classes = (permissions.IsAuthenticated, IsInStack)
-
-    def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.post_serializer
 
     def get_queryset(self):
         area = registry.get_area(self.kwargs.get('area'))
         return area.Post().objects.all()
 
-    def filter_queryset(self, queryset):
-        return queryset
-
-    def get_object(self):
+    def get_post(self):
         queryset = self.filter_queryset(self.get_queryset())
         pk = self.kwargs.get('pk')
         nonce = self.kwargs.get('nonce')
@@ -158,40 +152,39 @@ class SpreadView(views.APIView):
         self.check_object_permissions(self.request, obj)
         return obj
 
-    def post(self, request, area, pk, nonce, spread):
-        obj = self.get_object()
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        response.status_code = status.HTTP_200_OK
+        return response
+
+    def perform_create(self, serializer):
+        area = registry.get_area(self.kwargs.get('area'))
+        obj = self.get_post()
 
         # Handle Spread
-        if spread is '1':
-            obj.stack_outstanding = F('stack_outstanding') + obj.get_spread(area, self.request.user)
+        if serializer.validated_data.get('spread'):
+            obj.stack_outstanding = F('stack_outstanding') + obj.get_spread(self.kwargs.get('area'), self.request.user)
 
         # Remove from stack
-        obj.stack_done.add(request.user)
-        obj.stack_assigned.remove(request.user)
+        obj.stack_done.add(self.request.user)
+        obj.stack_assigned.remove(self.request.user)
         obj.save()
 
-        serializer = self.get_serializer_class()(obj, context={'request': request})
-        return Response(serializer.data)
+        serializer.save()
 
 
-class SubscribeView(views.APIView):
+class SubscribeView(generics.RetrieveUpdateAPIView):
     """
     Subscribe / Unsubscribe to a post
     """
+    serializer_class = serializers.SubscribeSerializer
     permission_classes = (permissions.IsAuthenticated,)
-
-    def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.post_serializer
 
     def get_queryset(self):
         area = registry.get_area(self.kwargs.get('area'))
         return area.Post().objects.all()
 
-    def filter_queryset(self, queryset):
-        return queryset
-
-    def get_object(self):
+    def get_post(self):
         queryset = self.filter_queryset(self.get_queryset())
         pk = self.kwargs.get('pk')
         nonce = self.kwargs.get('nonce')
@@ -199,19 +192,26 @@ class SubscribeView(views.APIView):
         obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
 
         self.check_object_permissions(self.request, obj)
+
         return obj
 
-    def post(self, request, area, pk, nonce):
-        obj = self.get_object()
+    def get_object(self):
+        return type("", (), dict(
+            subscribed=self.get_post().subscriber.filter(pk=self.request.user.pk).exists()
+        ))
 
-        subscribe = request.POST.get('subscribe', "true").lower() not in ["false", "0", "f", "n"]
-        if subscribe:
-            obj.subscriber.add(request.user)
+    def perform_update(self, serializer):
+        obj = self.get_post()
+
+        subscribed = serializer.validated_data.get('subscribed')
+        if subscribed is None:
+            pass
+        elif subscribed:
+            obj.subscriber.add(self.request.user)
         else:
-            obj.subscriber.remove(request.user)
+            obj.subscriber.remove(self.request.user)
 
-        serializer = self.get_serializer_class()(obj, context={'request': request})
-        return Response(serializer.data)
+        serializer.save()
 
 
 class ReputationView(generics.RetrieveAPIView):

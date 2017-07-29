@@ -33,6 +33,9 @@ class IsInStack(permissions.BasePermission):
     Only allow access if the card is in the users stack
     """
     def has_object_permission(self, request, view, obj):
+        if (obj.__class__ == type):
+            # Anonymous object for this user
+            return True
         return obj.stack_assigned.filter(pk=request.user.pk).exists()
 
 

@@ -317,8 +317,8 @@ class SpreadTest(APITestCase):
 
         response = self.client.post(reverse(
             'areas:spread',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'spread': 1}
-            ))
+            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            ), {'spread': True})
 
         del self.post.stack_outstanding  # Force update
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -334,8 +334,8 @@ class SpreadTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(reverse(
             'areas:spread',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'spread': 1}
-            ))
+            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            ), {'spread': True})
 
         del self.post.stack_outstanding  # Force update
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -351,8 +351,8 @@ class SpreadTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(reverse(
             'areas:spread',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'spread': 0}
-            ))
+            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            ), {'spread': False})
 
         del self.post.stack_outstanding  # Force update
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -364,8 +364,8 @@ class SpreadTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(reverse(
             'areas:spread',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'spread': 1}
-            ))
+            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            ), {'spread': True})
 
         del self.post.stack_outstanding  # Force update
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -427,10 +427,10 @@ class NotificationTest(APITestCase):
         Subscribe to a post
         """
         self.client.force_authenticate(user=self.user)
-        response = self.client.post(reverse(
+        response = self.client.put(reverse(
             'areas:subscribe',
             kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
-            ), {'subscribe': 1})
+            ), {'subscribed': True})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(self.user in self.post.subscriber.all())
@@ -443,10 +443,10 @@ class NotificationTest(APITestCase):
         self.assertTrue(self.user in self.post.subscriber.all())  # Check
 
         self.client.force_authenticate(user=self.user)
-        response = self.client.post(reverse(
+        response = self.client.put(reverse(
             'areas:subscribe',
             kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
-            ), {'subscribe': 0})
+            ), {'subscribed': False})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(self.user in self.post.subscriber.all())

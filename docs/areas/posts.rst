@@ -43,7 +43,7 @@ Spread
 ======
 
 To remove a post from the users stack and spread or skip it make a
-`POST` request to `/areas/<area>/<id>/spread/<spread>/`,
-where spread is either 1, to spread the post, or 2, to skip the post.
+`POST` request to `/areas/<area>/<id>/spread/`.
+Set the `spread` attribute to true to spread the post and to false to skip it.
 
 To spread or skip a post you need to have the card in your stack.
