@@ -1,4 +1,4 @@
-from random import randint
+from random import sample
 
 from django.conf import settings
 from django.db import models
@@ -50,14 +50,12 @@ class Post(models.Model):
             available = available.exclude(pk__in=cls.objects.filter(stack_done__pk=user.pk))  # Exclude already done
 
             numAvailable = available.count()
-            if not numAvailable > missing:
+            if numAvailable <= missing:
                 # When there are not more cards available than missing take all
                 for post in available:
                     post.assign_user(user)
             else:
-                for i in range(0, missing):
-                    # Choose random posts
-                    index = randint(0, numAvailable - 1)
+                for index in sample(range(numAvailable), missing):
                     available[index].assign_user(user)
 
         return stack
