@@ -1,4 +1,4 @@
-from random import sample
+from random import randint, sample
 
 from django.conf import settings
 from django.db import models
