@@ -87,4 +87,3 @@ class BanTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['banned'])
-

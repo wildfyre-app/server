@@ -19,12 +19,7 @@ with the required data.
 Get Flag Reasons
 ================
 
-The Flag Reasons are listed in the Response of an `OPTIONS` request,
-and may change in the future.
-
-.. note::
-    Flag Reasons SHOULD NOT be hard coded.
-    They Reasons MAY be cached for the current session.
+See :doc:`choices`.
 
 
 Content that can be Flagged

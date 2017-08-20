@@ -5,6 +5,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from choices import BanReason, BAN_REASON_CHOICES
+
 
 class Action(Enum):
     Posting = 1
@@ -12,27 +14,13 @@ class Action(Enum):
     Flagging = 3
 
 
-class Reason(Enum):
-    RUDE = 1
-    SPAM = 2
-    TOPIC = 3
-
-
-REASON_CHOICES = (
-    (Reason.RUDE.value, 'Rude'),
-    (Reason.SPAM.value, 'Spam'),
-    (Reason.TOPIC.value, 'Offtopic (Wrong area)'),
-    (None, 'Other (Please explain)'),
-)
-
-
 class BanBase(models.Model):
-    Reason = Reason
+    Reason = BanReason
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    reason = models.IntegerField(choices=REASON_CHOICES, null=True)
+    reason = models.IntegerField(choices=BAN_REASON_CHOICES, blank=True, null=True)
     comment = models.TextField(blank=True)
 
     auto = models.BooleanField(default=False)
@@ -41,7 +29,7 @@ class BanBase(models.Model):
         abstract = True
 
     def __str__(self):
-        return "%s: %s" % (self.user.username, Reason(self.reason).name.lower())
+        return "%s: %s" % (self.user.username, BanReason(self.reason).name.lower())
 
 
 class ActiveBanManager(models.Manager):

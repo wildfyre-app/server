@@ -15,6 +15,7 @@ Welcome to the WildFyre API documentation!
     areas/index
     account
     bans
+    choices
     flag
     users
 

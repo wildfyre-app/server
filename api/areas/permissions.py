@@ -1,7 +1,5 @@
 from rest_framework import permissions
 
-from bans.models import Ban
-
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
@@ -37,55 +35,3 @@ class IsInStack(permissions.BasePermission):
             # Anonymous object for this user
             return True
         return obj.stack_assigned.filter(pk=request.user.pk).exists()
-
-
-class MayPost(permissions.BasePermission):
-    """
-    Check if user is allowed to post
-    """
-    def has_object_permission(self, request, view, obj):
-        # Allow safe methods
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        return Ban.active.may_post(request.user)
-
-
-class MayComment(permissions.BasePermission):
-    """
-    Check if user is allowed to comment
-    """
-    def has_object_permission(self, request, view, obj):
-        # Allow safe methods
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        return Ban.active.may_comment(request.user)
-
-
-class MayFlag(permissions.BasePermission):
-    """
-    Check if user is allowed to falg
-    """
-    def has_object_permission(self, request, view, obj):
-        # Allow safe methods
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        return Ban.active.may_flag(request.user)
-
-
-class MayFlagPost(MayFlag):
-    """
-    Check if user is allowed to flag post
-    """
-    def has_object_permission(self, request, view, obj):
-        return super().has_object_permission(request, view, obj)
-
-
-class MayFlagComment(MayFlag):
-    """
-    Check if user is allowed to flag comment
-    """
-    def has_object_permission(self, request, view, obj):
-        return super().has_object_permission(request, view, obj)

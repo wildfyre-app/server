@@ -2,11 +2,11 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
 
-from .models import Flag, FlagComment
+from .models import Flag, FlagComment, FLAG_REASON_CHOICES
 
 
 class FlagSerializer(serializers.Serializer):
-    reason = serializers.ChoiceField(choices=FlagComment.REASON_CHOICES)
+    reason = serializers.ChoiceField(choices=FLAG_REASON_CHOICES)
     comment = serializers.CharField(default="", allow_blank=True)
 
     def create(self, validated_data):

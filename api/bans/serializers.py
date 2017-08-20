@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import Ban
+from .models import Ban, BAN_REASON_CHOICES
 
 
 class BanSerializer(serializers.ModelSerializer):
+    reason = serializers.ChoiceField(choices=BAN_REASON_CHOICES)
+
     class Meta:
         model = Ban
         fields = ('timestamp', 'reason', 'comment', 'expiry', 'auto',

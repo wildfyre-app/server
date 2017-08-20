@@ -4,9 +4,11 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.db.models import F
 
+
+from bans.permissions import MayPost, MayComment, MayFlagPost, MayFlagComment
+
 from . import serializers
-from .permissions import (IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack,
-                          MayPost, MayComment, MayFlagPost, MayFlagComment)
+from .permissions import IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack
 from .registry import registry
 
 from flags.serializers import FlagSerializer

@@ -25,7 +25,7 @@ his profile, or when an action fails unexpected with a 403
 Ban Reasons
 ===========
 
-The Ban reasons are the same as the reasons for :doc:`flagging <flag>`.
+See :doc:`choices`.
 
 
 Auto Bans

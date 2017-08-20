@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from .registry import registry
 from .views import *
 from .models import *
+from bans.models import Ban
 from flags.models import Flag, FlagComment
 
 
@@ -565,3 +566,46 @@ class FlagTest(APITestCase):
         flag = Flag.objects.filter(object_id=self.comment.pk)
         self.assertTrue(flag.exists())
         self.assertTrue(flag.get().comment_set.filter(reporter=self.reporter).exists())
+
+
+class EnforceBanTest(APITestCase):
+    def setUp(self):
+        self.area = list(registry.areas)[0]
+
+        self.user = get_user_model().objects.create_user(
+            username='user', password='secret')
+        Ban.objects.create(user=self.user, ban_all=True)
+
+        goodguy = get_user_model().objects.create_user(
+            username='goodguy', password='secret')
+        self.post = registry.get_area(self.area).Post().objects.create(text="Sample Post", author=goodguy)
+
+        # All requests should be authenticated as the banned user
+        self.client.force_authenticate(user=self.user)
+
+    def test_ban_post(self):
+        """
+        Test if banning of posting is enforced
+        """
+        response = self.client.post(reverse('areas:queue', kwargs={'area': self.area}), {'text': 'Hello World'})
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_ban_comment(self):
+        """
+        Test if banning of comments is enforced
+        """
+        response = self.client.post(
+            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            {'text': "Hi"})
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_ban_flag(self):
+        """
+        Test if banning of flaggin is enforced
+        """
+        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+                                    {'reason': Flag.Reason.SPAM.value})
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

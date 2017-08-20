@@ -5,11 +5,11 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 
-from bans.models import Reason, REASON_CHOICES
+from choices import FlagReason, FLAG_REASON_CHOICES
 
 
 class Flag(models.Model):
-    Reason = Reason
+    Reason = FlagReason
 
     class Status(Enum):
         PENDING = 1
@@ -47,21 +47,20 @@ class Flag(models.Model):
             content_type=ContentType.objects.get_for_model(obj),
             object_id=obj.pk
         )
-        if isinstance(reason, Reason):
+        if isinstance(reason, FlagReason):
             reason = reason.value
 
         return flag.comment_set.create(reporter=reporter, reason=reason, comment=comment)
 
 
 class FlagComment(models.Model):
-    Reason = Reason
-    REASON_CHOICES = REASON_CHOICES
+    Reason = FlagReason
 
     object = models.ForeignKey(Flag, on_delete=models.CASCADE, related_name='comment_set')
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL)
     created = models.DateTimeField(auto_now_add=True)
     spite = models.BooleanField(default=False)
-    reason = models.IntegerField(choices=REASON_CHOICES, blank=True, null=True)
+    reason = models.IntegerField(choices=FLAG_REASON_CHOICES, blank=True, null=True)
     comment = models.TextField()
 
     class Meta:
