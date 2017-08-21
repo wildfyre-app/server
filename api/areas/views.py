@@ -26,7 +26,18 @@ class NotificationView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
-        return self.request.user.comment_unread
+        notifications = {}
+        for comment in self.request.user.comment_unread.all():
+            if notifications.get(comment.post, None) is None:
+                notifications[comment.post] = {
+                    'area': comment.post.area,
+                    'post': comment.post,
+
+                    'comments': [],
+                }
+
+            notifications[comment.post]['comments'].append(comment.pk)
+        return notifications.values()
 
 
 class QueueView(generics.ListCreateAPIView):

@@ -8,17 +8,6 @@ class AreaSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=50)
 
 
-class NotificationSerializer(serializers.ModelSerializer):
-    area = serializers.ReadOnlyField(source='post.area')
-    post = serializers.ReadOnlyField(source='post.get_uri_key')
-    comment = serializers.ReadOnlyField(source='pk')
-
-    class Meta:
-        model = Comment
-        fields = ('area', 'post', 'comment', 'created',)
-        read_only_fields = ('created',)
-
-
 class CommentSerializer(serializers.ModelSerializer):
     author = ProfileSerializer(read_only=True, source='author.profile')
 
@@ -28,9 +17,16 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ('created',)
 
 
-class PostSerializer(serializers.ModelSerializer):
+class MinimalPostSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='get_uri_key')
     author = ProfileSerializer(read_only=True, source='author.profile')
+
+    class Meta:
+        model = Post
+        fields = ('id', 'author', 'text',)
+
+
+class PostSerializer(MinimalPostSerializer):
     subscribed = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True, source='comment_set')
 
@@ -38,10 +34,20 @@ class PostSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         return obj.subscriber.filter(pk=user.pk).exists()
 
-    class Meta:
-        model = Post
+    class Meta(MinimalPostSerializer.Meta):
         fields = ('id', 'author', 'subscribed', 'created', 'active', 'text', 'comments',)
         read_only_fields = ('created', 'active', 'subscribed')
+
+
+class NotificationSerializer(serializers.Serializer):
+    area = serializers.ReadOnlyField(source='post.area')
+    post = MinimalPostSerializer(read_only=True)
+
+    comments = serializers.ListField(child=serializers.IntegerField())
+
+    class Meta:
+        model = Comment
+        fields = ('area', 'post', 'comment',)
 
 
 class SpreadSerializer(serializers.Serializer):
