@@ -6,7 +6,7 @@ from .models import Flag, FlagComment, FLAG_REASON_CHOICES
 
 
 class FlagSerializer(serializers.Serializer):
-    reason = serializers.ChoiceField(choices=FLAG_REASON_CHOICES)
+    reason = serializers.ChoiceField(choices=FLAG_REASON_CHOICES, allow_null=True)
     comment = serializers.CharField(default="", allow_blank=True)
 
     def create(self, validated_data):
