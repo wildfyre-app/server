@@ -81,6 +81,18 @@ class AccountTest(TestCase):
 
         self.assertEqual(oldid, self.user1.id)
 
+    def test_change_username(self):
+        """
+        Changing the username should not be possible
+        """
+        olduser = self.user1.username
+
+        request = self.factory.patch(reverse('account:account'), {'username': "somethingElse"})
+        force_authenticate(request, self.user1)
+        response = AccountView.as_view()(request)
+
+        self.assertEqual(olduser, self.user1.username)
+
 
 class EmailTest(TestCase):
 

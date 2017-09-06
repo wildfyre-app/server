@@ -12,7 +12,6 @@ from .models import ConfirmMail
 
 
 class BaseAccountSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(validators=[UniqueValidator(queryset=get_user_model().objects.all(), lookup='iexact')])
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     class Meta:
@@ -25,6 +24,8 @@ class BaseAccountSerializer(serializers.ModelSerializer):
 
 
 class ManageAccountSerializer(BaseAccountSerializer):
+    username = serializers.ReadOnlyField()
+
     class Meta(BaseAccountSerializer.Meta):
         fields = ('id', 'username', 'email', 'password',)
         read_only_fields = ('username',)
@@ -67,6 +68,7 @@ class ManageAccountSerializer(BaseAccountSerializer):
 
 
 class RegisterAccountSerializer(BaseAccountSerializer):
+    username = serializers.CharField(validators=[UniqueValidator(queryset=get_user_model().objects.all(), lookup='iexact')])
     captcha = serializers.CharField(write_only=True)
 
     class Meta(BaseAccountSerializer.Meta):
