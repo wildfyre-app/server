@@ -49,7 +49,7 @@ class Post(models.Model):
             available = available.exclude(pk__in=stack.values('pk'))  # Exclude allready assined
             available = available.exclude(pk__in=cls.objects.filter(stack_done__pk=user.pk))  # Exclude already done
 
-            numAvailable = available.count()
+            numAvailable = len(available)  # Evaluate queryset. To avoid race conditions (less available than count)
             if numAvailable <= missing:
                 # When there are not more cards available than missing take all
                 for post in available:
