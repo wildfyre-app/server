@@ -11,4 +11,6 @@ urlpatterns = [
     url(r'^auth/$', tokenviews.obtain_auth_token, name='auth'),
     url(r'^confirmmail/(?P<pk>[0-9]+)/(?P<nonce>.*)/$', views.confirm_mail, name='confirm-mail'),
     url(r'^register/$', views.RegisterView.as_view(), name='register'),
+    url(r'^recover/$', views.RecoverAccountView.as_view(), name='recover'),
+    url(r'^recover/reset/$', views.ResetPasswordView.as_view(), name='reset-password'),
 ]

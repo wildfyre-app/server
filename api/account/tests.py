@@ -1,8 +1,9 @@
 import unittest
 import django
 from django.urls import reverse
+from django.core import mail
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from .views import *
@@ -14,6 +15,10 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
 from django.core import mail
+
+
+RECAPTCHA_TEST_SECRET = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+
 
 class AccountTest(TestCase):
 
@@ -116,9 +121,7 @@ class EmailTest(TestCase):
         self.assertIsNotNone(ConfirmMail.objects.get(user=self.user))
 
 
-@unittest.skipUnless(
-    settings.RECAPTCHA_SECRET == "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
-    "Can't bypass captcha when not using debug key")
+@override_settings(RECAPTCHA_SECRET=RECAPTCHA_TEST_SECRET)
 class RegisterTest(APITestCase):
     def test_register(self):
         """
@@ -150,3 +153,156 @@ class RegisterTest(APITestCase):
             })
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+@override_settings(RECAPTCHA_SECRET=RECAPTCHA_TEST_SECRET)
+class RecoverTest(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create(username="user", email="user@example.com", password="secret")
+        self.user1 = get_user_model().objects.create(username="user1", email="user1@example.com", password="secret")
+        self.user2 = get_user_model().objects.create(username="user2", email="user1@example.com", password="secret")
+
+    def test_get_username_one(self):
+        """
+        Get the username, when only one username has the specific email address
+        """
+        mail.outbox = []
+
+        response = self.client.post(
+            reverse('account:recover'), {
+                'email': self.user.email,
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_get_username_multiple(self):
+        """
+        Get the username, when multiple usernames have the specific address
+        """
+        mail.outbox = []
+
+        response = self.client.post(
+            reverse('account:recover'), {
+                'email': self.user1.email,
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_get_username_none(self):
+        """
+        Try with an email with no assigned usernames.
+        Status code should still be 201, but no email should be send.
+        """
+        mail.outbox = []
+
+        response = self.client.post(
+            reverse('account:recover'), {
+                'email': "nobody@example.invalid",
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_reset_password(self):
+        """
+        Reset the password of a user
+        """
+        mail.outbox = []
+
+        response1 = self.client.post(
+            reverse('account:recover'), {
+                'email': self.user1.email,
+                'username': self.user1.username,
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+
+        transaction = response1.data['transaction']
+        resetObj = ResetPassword.objects.get(transaction=transaction)
+
+        self.assertIsNotNone(transaction)
+        self.assertIn(resetObj.token, mail.outbox[0].body)
+        self.assertEqual(resetObj.user, self.user1)
+
+        new_password = "highQualw39Qdjf@♣asdk34kasdUI$E"
+        response2 = self.client.post(
+            reverse('account:reset-password'), {
+                'transaction': transaction,
+                'token': resetObj.token,
+                'new_password': new_password,
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
+        self.assertIsNotNone(authenticate(username=self.user1.username, password=new_password))  # Check if new password is considered valid
+        with self.assertRaises(ResetPassword.DoesNotExist):
+            ResetPassword.objects.get(pk=resetObj.pk)
+
+    def test_reset_password_invalid_email(self):
+        """
+        Reset the password with invalid user data
+        """
+        mail.outbox = []
+
+        response = self.client.post(
+            reverse('account:recover'), {
+                'email': "nobody@example.invalid",
+                'username': self.user1.username,
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIsNotNone(response.data['transaction'])
+
+    def test_reset_password_invalid_email(self):
+        """
+        Reset the password with invalid user data
+        """
+        mail.outbox = []
+
+        response = self.client.post(
+            reverse('account:recover'), {
+                'email': self.user1.email,
+                'username': "thisIsNotMyUserName",
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIsNotNone(response.data['transaction'])
+
+    def test_reset_invalid_data(self):
+        new_password = "highQualw39Qdjf@♣asdk34kasdUI$E"
+        response = self.client.post(
+            reverse('account:reset-password'), {
+                'transaction': uuid.uuid4(),
+                'token': urlsafe_b64encode(os.urandom(50)),
+                'new_password': new_password,
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_reset_invalid_token(self):
+        resetObj = ResetPassword.objects.create(user=self.user)
+        new_password = "highQualw39Qdjf@♣asdk34kasdUI$E"
+        response = self.client.post(
+            reverse('account:reset-password'), {
+                'transaction': resetObj.transaction,
+                'token': urlsafe_b64encode(os.urandom(50)),
+                'new_password': new_password,
+                'captcha': "captchaResult"
+            })
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIsNone(authenticate(username=self.user.username, password=new_password))
+        # Reset object should still exist
+        ResetPassword.objects.get(pk=resetObj.pk)

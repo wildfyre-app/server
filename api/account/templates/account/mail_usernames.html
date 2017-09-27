@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    Hello,<br />
+    <br />
+    Someone, hopefully you, requested {% if usernames|length > 1 %}a list of usernames{% else %}the username{% endif %} assossiated with this email address.<br />
+    <br />
+    {% if usernames|length == 1 %}
+        Your username is: <code>{{ usernames.0 }}</code>
+    {% else %}
+        Your usernames are:
+        <ul>
+        {% for username in usernames %}
+            <li><code>{{ username }}</code></li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    <br />
+    If you didn't requested this email, we are sorry for that. You can safely ignore this email.
+</body>
+</html>

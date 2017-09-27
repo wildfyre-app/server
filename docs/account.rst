@@ -47,7 +47,7 @@ Registration is done with a POST request to the `/account/register/` endpoint.
 Registration requires a captcha.
 
 .. note::
-  At the moment registration MUST only be done through WildFyre websites.
+  At the moment registration MUST only be done through WildFyre services.
 
 
 Authentication
@@ -62,3 +62,36 @@ Confirming E-Mail
 When Users their E-Mail address, they get an email to their new address,
 with a link to confirm their address.
 Until this link is clicked the old address is used
+
+
+Recovering Access
+=================
+
+When a user forgets his username or password he can recover his access.
+
+.. note::
+  At the moment account recovery MUST only be done through WildFyre services.
+
+
+Recovering Usernames
+--------------------
+
+To get an email with all the usernames associated with a specific email address
+make a `POST`-Request to the `/account/recover/` endpoint
+with the email address, leaving the username field empty.
+This requires a captcha.
+
+
+Recovering Password
+-------------------
+
+If the user forgot his password he can request a that a token is sent to his
+email, with a token to reset the password.
+
+First make a `POST`-Request to the `/account/recover/` endpoint.
+Fill out both email address and username. This action requires a captcha.
+The returned data will contain a transaction id.
+
+Then make a `POST`-Request to the `/account/recover/reset/` endpoint.
+This requires the transaction id, as well as the token received by email.
+Again a captcha is required.

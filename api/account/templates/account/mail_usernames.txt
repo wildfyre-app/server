@@ -1,0 +1,14 @@
+Hello,
+
+Someone, hopefully you, requested {% if usernames|length > 1 %}a list of usernames{% else %}the username{% endif %} assossiated with this email address.
+
+{% if usernames|length == 1 %}
+Your username is: {{ usernames.0 }}
+{% else %}
+Your usernames are:
+{% for username in usernames %}
+    - {{ username }}
+{% endfor %}
+{% endif %}
+
+If you didn't requested this email, we are sorry for that. You can safely ignore this email.
