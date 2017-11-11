@@ -121,7 +121,7 @@ class RecoverAccountSerializer(serializers.Serializer):
 
         if username is not None:
             try:
-                user = get_user_model().objects.get(username=username, email=email)
+                user = get_user_model().objects.get(username__iexact=username, email=email)
                 transaction = ResetPassword.objects.create(user=user).transaction
             except get_user_model().DoesNotExist:
                 # Don't show that it didn't worked
