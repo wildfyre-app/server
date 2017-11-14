@@ -1,11 +1,14 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from core.validators import FileSizeValidator
+
 from .models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='user.username')
+    avatar = serializers.ImageField(validators=[FileSizeValidator(0.5)])
     banned = serializers.SerializerMethodField()
 
     class Meta:
