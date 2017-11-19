@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
+from django.urls import reverse
 
 from choices import FlagReason, FLAG_REASON_CHOICES
 
@@ -25,7 +26,8 @@ class Flag(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     object = GenericForeignKey()
-    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
+    object_author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='%(class)s_object_author')
+    handler = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='%(class)s_handler')
     status = models.IntegerField(choices=STATUS_CHOICES, default=Status.PENDING.value)
 
     class Meta:
@@ -37,9 +39,19 @@ class Flag(models.Model):
             self.object.__str__(),
         )
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.object:
+            self.object_author = self.object.author
+
+        return super().save(force_insert, force_update, using, update_fields)
+
     @property
     def count(self):
         return self.comment_set.count()
+
+    @property
+    def text(self):
+        return self.object.text
 
     @classmethod
     def add_flag(cls, obj, reporter, reason, comment):
@@ -61,7 +73,7 @@ class FlagComment(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     spite = models.BooleanField(default=False)
     reason = models.IntegerField(choices=FLAG_REASON_CHOICES, blank=True, null=True)
-    comment = models.TextField()
+    comment = models.TextField(blank=True)
 
     class Meta:
         unique_together = (('object', 'reporter'),)

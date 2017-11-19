@@ -131,6 +131,7 @@
     <Content Include="account\templates\account\mail_passwordreset.txt" />
     <Content Include="account\templates\account\mail_usernames.html" />
     <Content Include="account\templates\account\mail_usernames.txt" />
+    <Content Include="flags\templates\admin\flags\flag\change_form.html" />
     <Content Include="requirements.txt" />
     <Content Include="templates\rest_framework\api.html" />
     <Content Include="account\templates\account\mail_confirm.txt" />
@@ -160,6 +161,9 @@
     <Folder Include="flags\migrations\" />
     <Folder Include="flags\templates\" />
     <Folder Include="choices\" />
+    <Folder Include="flags\templates\admin\" />
+    <Folder Include="flags\templates\admin\flags\" />
+    <Folder Include="flags\templates\admin\flags\flag\" />
     <Folder Include="templates\" />
     <Folder Include="templates\rest_framework\" />
     <Folder Include="users\" />

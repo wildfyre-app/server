@@ -4,16 +4,29 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
+from areas.models import Post, Comment
+from areas.registry import registry
 from .models import Flag
 
 
 class FlagTest(TestCase):
-    def test_flag(self):
-        """
-        Try to flag some content (a User in this case)
-        """
-        obj = get_user_model().objects.create(username="someUser")
-        reporter = get_user_model().objects.create(username="reporter")
-        flag = Flag.add_flag(obj, reporter, Flag.Reason.RUDE, "")
+    def setUp(self):
+        self.user = get_user_model().objects.create(username="someUser")
+        self.reporter = get_user_model().objects.create(username="reporter")
 
+        self.post = Post.objects.create(author=self.user, text="This is rude", area=list(registry.areas)[0])
+
+    def test_flag_post(self):
+        """
+        Try to flag a post
+        """
+        flag = Flag.add_flag(self.post, self.reporter, Flag.Reason.RUDE, "")
+        # No error, everything seems fine
+
+    def test_flag_comment(self):
+        """
+        Try to flag a comment
+        """
+        comment = Comment.objects.create(post=self.post, author=self.user, text="This is evil")
+        flag = Flag.add_flag(comment, self.reporter, Flag.Reason.OTHER, "Evil")
         # No error, everything seems fine

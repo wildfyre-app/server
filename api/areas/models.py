@@ -105,6 +105,9 @@ class Comment(models.Model):
             subscriber = self.post.subscriber.exclude(pk=self.author.pk)
             self.unread.add(*subscriber)
 
+    def __str__(self):
+        return "%s/%s" % (self.post, self.pk)
+
 
 class Reputation(models.Model):
     area = models.CharField(max_length=30, db_index=True)
