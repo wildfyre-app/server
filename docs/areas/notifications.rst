@@ -20,6 +20,9 @@ Mark Notifications Read
 
 Notifications are automatically marked read, when you view the respective post.
 
+To mark all notifications as read make a `DELETE` request
+to `/areas/notification/`.
+
 
 Subscribe to a post
 ===================

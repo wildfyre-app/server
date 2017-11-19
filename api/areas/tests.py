@@ -488,6 +488,16 @@ class NotificationTest(APITestCase):
 
         self.assertFalse(comment in self.user_author.comment_unread.all())
 
+    def test_mark_all_read(self):
+        for _ in range(10):
+            # Post 10 comments
+            self.post_comment()
+
+        self.client.force_authenticate(user=self.user_author)
+        self.client.delete(reverse('areas:notification'))
+
+        self.assertFalse(self.user_author.comment_unread.exists())
+
 
 @unittest.skipUnless(registry.areas, "No areas defined")
 class ReputationTest(APITestCase):

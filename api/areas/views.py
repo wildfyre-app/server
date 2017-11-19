@@ -39,6 +39,10 @@ class NotificationView(generics.ListAPIView):
             notifications[comment.post]['comments'].append(comment.pk)
         return notifications.values()
 
+    def delete(self, request):
+        request.user.comment_unread.clear()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class QueueView(generics.ListCreateAPIView):
     """
