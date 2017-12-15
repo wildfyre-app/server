@@ -5,7 +5,7 @@ Notifications
 A user will be automatically subscribed to all posts he created or commented on.
 
 .. note::
-    All requests on this page need to be :doc:`authenticated <../auth>`.
+    All requests on this page must be :doc:`authenticated <../auth>`.
 
 View Notifications
 ==================
@@ -29,3 +29,10 @@ Subscribe to a post
 
 To update your subscription status of a post make a `PUT` request to
 `/areas/<area>/<post_id>/subscribe/`.
+
+
+View subscribed posts
+=====================
+
+To view all post you have subscribed to,
+make a `GET` request to `/areas/subscribed/`.

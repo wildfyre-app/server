@@ -39,15 +39,18 @@ class PostSerializer(MinimalPostSerializer):
         read_only_fields = ('created', 'active', 'subscribed')
 
 
+class MinimalPostAreaSerializer(MinimalPostSerializer):
+    area = serializers.ReadOnlyField()
+
+    class Meta(MinimalPostSerializer.Meta):
+        fields = ('area',) + MinimalPostSerializer.Meta.fields
+
+
 class NotificationSerializer(serializers.Serializer):
     area = serializers.ReadOnlyField(source='post.area')
     post = MinimalPostSerializer(read_only=True)
 
     comments = serializers.ListField(child=serializers.IntegerField())
-
-    class Meta:
-        model = Comment
-        fields = ('area', 'post', 'comment',)
 
 
 class SpreadSerializer(serializers.Serializer):

@@ -8,6 +8,7 @@ app_name = 'areas'
 urlpatterns = [
     url(r'^$', views.AreaView.as_view(), name='areas'),
     url(r'^notification/$', views.NotificationView.as_view(), name='notification'),
+    url(r'^subscribed/$', views.SubscribedView.as_view(), name='subscribed'),
     url(r'^(?P<area>[a-z]*)/$', views.QueueView.as_view(), name='queue'),
     url(r'^(?P<area>[a-z]*)/own/$', views.OwnView.as_view(), name='own'),
     url(r'^(?P<area>[a-z]*)/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/$', views.DetailView.as_view(), name='detail'),

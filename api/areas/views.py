@@ -44,6 +44,14 @@ class NotificationView(generics.ListAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class SubscribedView(generics.ListAPIView):
+    serializer_class = serializers.MinimalPostAreaSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return self.request.user.post_subscriber.all()
+
+
 class QueueView(generics.ListCreateAPIView):
     """
     Retrive queue or post new.

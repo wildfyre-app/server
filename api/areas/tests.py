@@ -498,6 +498,15 @@ class NotificationTest(APITestCase):
 
         self.assertFalse(self.user_author.comment_unread.exists())
 
+    def test_subscription_list(self):
+        self.post.subscriber.add(self.user)
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse('areas:subscribed'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), self.user.post_subscriber.count())
+
 
 @unittest.skipUnless(registry.areas, "No areas defined")
 class ReputationTest(APITestCase):
