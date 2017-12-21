@@ -44,14 +44,6 @@ class NotificationView(generics.ListAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SubscribedView(generics.ListAPIView):
-    serializer_class = serializers.MinimalPostAreaSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def get_queryset(self):
-        return self.request.user.post_subscriber.all()
-
-
 class QueueView(generics.ListCreateAPIView):
     """
     Retrive queue or post new.
@@ -83,6 +75,21 @@ class OwnView(generics.ListAPIView):
     def get_queryset(self):
         area = registry.get_area(self.kwargs.get('area'))
         return area.Post().objects.filter(author=self.request.user)
+
+
+class SubscribedView(generics.ListAPIView):
+    """
+    List all posts subscribed to
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_serializer_class(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.post_serializer
+
+    def get_queryset(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return self.request.user.post_subscriber.filter(area=area.name)
 
 
 class DetailView(generics.RetrieveDestroyAPIView):

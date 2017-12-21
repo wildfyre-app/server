@@ -502,7 +502,7 @@ class NotificationTest(APITestCase):
         self.post.subscriber.add(self.user)
 
         self.client.force_authenticate(user=self.user)
-        response = self.client.get(reverse('areas:subscribed'))
+        response = self.client.get(reverse('areas:subscribed', kwargs={'area': self.area}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), self.user.post_subscriber.count())

@@ -35,4 +35,4 @@ View subscribed posts
 =====================
 
 To view all post you have subscribed to,
-make a `GET` request to `/areas/subscribed/`.
+make a `GET` request to `/areas/<area>/subscribed/`.
