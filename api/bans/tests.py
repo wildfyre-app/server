@@ -44,7 +44,7 @@ class BanTest(APITestCase):
             response = self.client.get(reverse('bans:bans'))
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertEqual(response.data, [])
+            self.assertEqual(response.data['results'], [])
 
     def test_banned(self):
         """
@@ -54,9 +54,9 @@ class BanTest(APITestCase):
         response = self.client.get(reverse('bans:bans'))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['results']), 1)
         
-        ban = response.data[0]
+        ban = response.data['results'][0]
         self.assertTrue(ban['ban_all'])
         items = ['timestamp', 'reason', 'comment', 'expiry', 'ban_all', 'ban_comment', 'ban_flag',]
         for item in items:
@@ -70,9 +70,9 @@ class BanTest(APITestCase):
         response = self.client.get(reverse('bans:bans'))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreater(len(response.data), 1)
+        self.assertGreater(len(response.data['results']), 1)
 
-        for ban in response.data:
+        for ban in response.data['results']:
             self.assertFalse(ban['ban_all'])
             items = ['timestamp', 'reason', 'comment', 'expiry', 'ban_all', 'ban_comment', 'ban_flag',]
             for item in items:

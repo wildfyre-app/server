@@ -16,6 +16,7 @@ from flags.serializers import FlagSerializer
 
 class AreaView(generics.ListAPIView):
     serializer_class = serializers.AreaSerializer
+    pagination_class = None
 
     def get_queryset(self):
         return registry.areas.values()
@@ -37,7 +38,7 @@ class NotificationView(generics.ListAPIView):
                 }
 
             notifications[comment.post]['comments'].append(comment.pk)
-        return notifications.values()
+        return list(notifications.values())
 
     def delete(self, request):
         request.user.comment_unread.clear()

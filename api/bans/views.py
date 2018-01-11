@@ -8,7 +8,7 @@ class BanView(generics.ListAPIView):
     """
     List current active bans
     """
-    queryset = Ban.active.all()
+    queryset = Ban.active.order_by('pk').all()
     serializer_class = BanSerializer
     permission_classes = (permissions.IsAuthenticated,)
 

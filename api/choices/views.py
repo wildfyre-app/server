@@ -6,9 +6,11 @@ from .serializers import ReasonSerializer
 
 class BanReasonView(generics.ListAPIView):
     serializer_class = ReasonSerializer
+    pagination_class = None
     queryset = BAN_REASON_CHOICES
 
 
 class FlagReasonView(generics.ListAPIView):
     serializer_class = ReasonSerializer
+    pagination_class = None
     queryset = FLAG_REASON_CHOICES

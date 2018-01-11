@@ -27,8 +27,23 @@ class Post(models.Model):
 
     subscriber = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='%(class)s_subscriber')
 
+    class Meta:
+        ordering = ['pk']
+
     def __str__(self):
         return self.get_uri_key()
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        new = self.pk is None
+
+        if self.area not in registry.areas:
+            raise ValueError("'%s' is not a valid Area" % self.area)
+        if new:
+            self.stack_outstanding = self.get_spread(self.area, self.author)
+        super().save(force_insert, force_update, using, update_fields)
+        if new:
+            self.stack_done.add(self.author)
+            self.subscriber.add(self.author)
 
     def get_uri_key(self):
         """
@@ -66,18 +81,6 @@ class Post(models.Model):
         self.save()
         self.refresh_from_db()
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        new = self.pk is None
-
-        if self.area not in registry.areas:
-            raise ValueError("'%s' is not a valid Area" % self.area)
-        if new:
-            self.stack_outstanding = self.get_spread(self.area, self.author)
-        super().save(force_insert, force_update, using, update_fields)
-        if new:
-            self.stack_done.add(self.author)
-            self.subscriber.add(self.author)
-
     @staticmethod
     def get_spread(area, user):
         return registry.get_area(area).rep_model.get_spread(area, user).spread
@@ -96,6 +99,9 @@ class Comment(models.Model):
     text = models.TextField()
 
     unread = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='%(class)s_unread')
+
+    class Meta:
+        ordering = ['created']
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         new = self.pk is None

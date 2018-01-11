@@ -139,13 +139,13 @@ class OwnTest(APITestCase):
 
     def test_get_own(self):
         """
-        Try to get Posts, 1 card is available
+        Try to get Posts, 1 post is available
         """
         self.client.force_authenticate(user=self.user_author)
         response = self.client.get(reverse('areas:own', kwargs={'area': self.area}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['results']), 1)
 
     def test_get_own_none(self):
         """
@@ -155,7 +155,7 @@ class OwnTest(APITestCase):
         response = self.client.get(reverse('areas:own', kwargs={'area': self.area}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
 
 @unittest.skipUnless(registry.areas, "No areas defined")
@@ -412,6 +412,34 @@ class NotificationTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_notification_get_none(self):
+        """
+        If a user has no notifications, he shoudn't see any
+        """
+        self.user_author.comment_unread.clear()
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.get(reverse('areas:notification'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 0)
+        self.assertEqual(response.data['results'], [])
+
+    def test_notification_get(self):
+        """
+        A user should see their own notifications
+        """
+        # All comments are to the same post
+        self.post_comment();
+        self.post_comment();
+        self.post_comment();
+
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.get(reverse('areas:notification') + "?limit=100")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['comments'], list(self.user_author.comment_unread.values_list('pk', flat=True)))
+
     def test_subscribe_not_authenticated(self):
         """
         Unautenticated users don't need to subscribe
@@ -505,7 +533,7 @@ class NotificationTest(APITestCase):
         response = self.client.get(reverse('areas:subscribed', kwargs={'area': self.area}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), self.user.post_subscriber.count())
+        self.assertEqual(len(response.data['results']), self.user.post_subscriber.count())
 
 
 @unittest.skipUnless(registry.areas, "No areas defined")
