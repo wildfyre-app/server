@@ -69,7 +69,7 @@ class FlagComment(models.Model):
     Reason = FlagReason
 
     object = models.ForeignKey(Flag, on_delete=models.CASCADE, related_name='comment_set')
-    reporter = models.ForeignKey(settings.AUTH_USER_MODEL)
+    reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     spite = models.BooleanField(default=False)
     reason = models.IntegerField(choices=FLAG_REASON_CHOICES, blank=True, null=True)

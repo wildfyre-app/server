@@ -27,8 +27,8 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = serializers.RegisterAccountSerializer
 
 
-def confirm_mail(request, pk, nonce):
-    confirm = get_object_or_404(ConfirmMail, pk=pk, nonce=nonce)
+def confirm_mail(request, pk, token):
+    confirm = get_object_or_404(ConfirmMail, pk=pk, token=token)
 
     confirm.user.email = confirm.new_mail
     confirm.user.save()

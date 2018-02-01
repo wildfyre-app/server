@@ -284,7 +284,7 @@ class RecoverTest(APITestCase):
         response = self.client.post(
             reverse('account:reset-password'), {
                 'transaction': uuid.uuid4(),
-                'token': urlsafe_b64encode(os.urandom(50)),
+                'token': token_urlsafe(50),
                 'new_password': new_password,
                 'captcha': "captchaResult"
             })
@@ -297,7 +297,7 @@ class RecoverTest(APITestCase):
         response = self.client.post(
             reverse('account:reset-password'), {
                 'transaction': resetObj.transaction,
-                'token': urlsafe_b64encode(os.urandom(50)),
+                'token': token_urlsafe(50),
                 'new_password': new_password,
                 'captcha': "captchaResult"
             })

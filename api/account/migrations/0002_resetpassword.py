@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('transaction', models.UUIDField(default=account.models.ResetPassword.transaction_default)),
-                ('token', models.CharField(default=account.models.ResetPassword.token_default, max_length=68)),
+                ('token', models.CharField(default=account.models.token_default, max_length=68)),
                 ('expire_date', models.DateTimeField(db_index=True, default=account.models.ResetPassword.expire_date_default)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],

@@ -1,4 +1,4 @@
-from django.conf.urls import url, include
+from django.urls import path, include
 
 from . import views
 
@@ -6,5 +6,5 @@ from . import views
 app_name = 'bans'
 
 urlpatterns = [
-    url(r'^$', views.BanView.as_view(), name='bans'),
+    path('', views.BanView.as_view(), name='bans'),
 ]

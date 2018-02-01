@@ -2,6 +2,6 @@ Hello {{ username }},
 
 Please confirm that this is your email address by clicking on the link below:
 
-https://api.wildfyre.net{% url 'account:confirm-mail' pk nonce %}
+https://api.wildfyre.net{% url 'account:confirm-mail' pk token %}
 
 If you didn't registered this email, we are sorry for that. You then can safely ignore this email.

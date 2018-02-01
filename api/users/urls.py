@@ -1,4 +1,4 @@
-from django.conf.urls import url, include
+from django.urls import path, include
 
 from . import views
 
@@ -6,6 +6,6 @@ from . import views
 app_name = 'users'
 
 urlpatterns = [
-    url(r'^$', views.ProfileView.as_view(), name='profile'),
-    url(r'^(?P<user>[0-9]+)/$', views.UserProfileView.as_view(), name='profile'),
+    path('', views.ProfileView.as_view(), name='profile'),
+    path('<int:user>)/', views.UserProfileView.as_view(), name='profile'),
 ]

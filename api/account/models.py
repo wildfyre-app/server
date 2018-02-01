@@ -1,9 +1,8 @@
 from django.db import models
 
-import os
 import uuid
 import datetime
-from base64 import urlsafe_b64encode
+from secrets import token_urlsafe
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.core.mail import EmailMultiAlternatives
@@ -15,11 +14,16 @@ from django.core.mail import send_mail
 from django.utils import timezone
 
 
-# Create your models here.
+def token_default():
+    return token_urlsafe(50)  # Requires at max 68 Chars
+
+
 class ConfirmMail(models.Model):
+    token_default = token_default
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     new_mail = models.EmailField()
-    nonce = models.CharField(max_length=68, blank=True)  # Allow Blank because nonce is generated when saving
+    token = models.CharField(max_length=68, default=token_default)
     created = models.DateTimeField(auto_now_add=True)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -28,12 +32,10 @@ class ConfirmMail(models.Model):
         except ObjectDoesNotExist:
             pass
 
-        self.nonce = urlsafe_b64encode(os.urandom(50))  # Requires 68 Chars
-
         returned = super().save(force_insert, force_update, using, update_fields)
 
         # Send mail
-        context = {'username': self.user.username, 'pk': self.pk, 'nonce': self.nonce}
+        context = {'username': self.user.username, 'pk': self.pk, 'token': self.token}
         mail_plain = get_template('account/mail_confirm.txt').render(context)
         mail_html = get_template('account/mail_confirm.html').render(context)
 
@@ -47,11 +49,10 @@ class ConfirmMail(models.Model):
 
 
 class ResetPassword(models.Model):
+    token_default = token_default
+
     def transaction_default():
         return uuid.uuid4()
-
-    def token_default():
-        return urlsafe_b64encode(os.urandom(50))
 
     def expire_date_default():
         return timezone.now() + datetime.timedelta(hours=6)
