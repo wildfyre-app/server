@@ -15,6 +15,7 @@ class Post(models.Model):
 
     area = models.CharField(max_length=30, db_index=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False)  # Might be null, but must only when user gets deleted
+    anonym = models.BooleanField(default=False)
     nonce = models.IntegerField(default=generate_nonce)  # To prevent malicious users from trying pk's
     created = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
@@ -50,6 +51,14 @@ class Post(models.Model):
         Returns the key to use in the uri (nonce + pk)
         """
         return str(self.nonce) + str(self.pk)
+
+    def get_profile(self):
+        """
+        Returns the profile of the author or None if anonym is True
+        """
+        if self.anonym:
+            return None
+        return self.author.profile
 
     @classmethod
     def get_stack(cls, area, user):

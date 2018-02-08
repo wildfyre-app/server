@@ -9,6 +9,13 @@ To create a new Post, make a `POST` request to `/areas/<area>/` and provide
 the required data.
 
 
+Anonym Posts
+------------
+
+To make an anonym post, set `anonym` to `true`.
+On an anonym post `author` is always `null`, but `author` can also be `null` when the post wasn't anonym.
+
+
 Getting Posts
 =============
 

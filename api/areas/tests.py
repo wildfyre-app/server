@@ -173,6 +173,7 @@ class DetailTest(APITestCase):
         # Test Posts
         postModel = registry.get_area(self.area).Post()
         self.post = postModel.objects.create(author=self.user_author, text="Hi there")
+        self.anonym_post = postModel.objects.create(author=self.user_author, text="Hi there", anonym=True)
 
     def test_view_post(self):
         """
@@ -184,7 +185,23 @@ class DetailTest(APITestCase):
             ))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertNotEqual(response.data, {})
+        self.assertFalse(response.data['anonym'])
+        self.assertEqual(response.data['author']['user'], self.user_author.pk)
+        
+    def test_view_anonym_post(self):
+        """
+        Author should be displayed if the post is not anonym and author isn't deleted
+        """
+        
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse(
+            'areas:detail',
+            kwargs={'area': self.area, 'pk': self.anonym_post.pk, 'nonce': self.anonym_post.nonce}
+            ))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['anonym'])
+        self.assertIsNone(response.data['author'])
 
     def test_delete_post(self):
         """

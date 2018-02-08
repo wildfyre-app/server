@@ -19,7 +19,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class MinimalPostSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='get_uri_key')
-    author = ProfileSerializer(read_only=True, source='author.profile')
+    author = ProfileSerializer(read_only=True, source='get_profile')
 
     class Meta:
         model = Post
@@ -35,7 +35,7 @@ class PostSerializer(MinimalPostSerializer):
         return obj.subscriber.filter(pk=user.pk).exists()
 
     class Meta(MinimalPostSerializer.Meta):
-        fields = ('id', 'author', 'subscribed', 'created', 'active', 'text', 'comments',)
+        fields = ('id', 'author', 'anonym', 'subscribed', 'created', 'active', 'text', 'comments',)
         read_only_fields = ('created', 'active', 'subscribed')
 
 
