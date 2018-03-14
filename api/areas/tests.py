@@ -203,6 +203,28 @@ class DetailTest(APITestCase):
         self.assertTrue(response.data['anonym'])
         self.assertIsNone(response.data['author'])
 
+    def test_view_author_none(self):
+        """
+        Author might be None, because he got deleted
+        """
+        deleted_user = get_user_model().objects.create_user(
+            username='DELETE ME', password='secret')
+
+        postModel = registry.get_area(self.area).Post()
+        post = postModel.objects.create(author=deleted_user, text="Hi there")
+
+        deleted_user.delete();
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse(
+            'areas:detail',
+            kwargs={'area': self.area, 'pk': post.pk, 'nonce': post.nonce}
+            ))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data['author'])
+        self.assertFalse(response.data['anonym'])
+
     def test_delete_post(self):
         """
         Try to delete own post

@@ -56,7 +56,7 @@ class Post(models.Model):
         """
         Returns the profile of the author or None if anonym is True
         """
-        if self.anonym:
+        if self.anonym or self.author is None:
             return None
         return self.author.profile
 
