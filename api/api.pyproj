@@ -91,6 +91,9 @@
     </Compile>
     <Compile Include="core\migrations\__init__.py" />
     <Compile Include="core\models.py" />
+    <Compile Include="core\tests.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="core\validators.py">
       <SubType>Code</SubType>
     </Compile>
