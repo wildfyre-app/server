@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
@@ -41,8 +43,11 @@ class ProfileQuerySet(models.QuerySet):
 
 
 class Profile(models.Model):
+    def avatar_path(instance, filename):
+        return 'avatar/%u%s' % (instance.user.id, os.path.splitext(filename)[1])
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, unique=True)
-    avatar = models.ImageField(upload_to='avatar/', null=True, blank=True, default=None)
+    avatar = models.ImageField(upload_to=avatar_path, null=True, blank=True, default=None)
     bio = models.TextField(blank=True, default="")
 
     objects = ProfileQuerySet.as_manager()
