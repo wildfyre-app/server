@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.encoding import force_text
+from django.utils.html import format_html
 from django.contrib.admin.options import csrf_protect_m, IS_POPUP_VAR
 
 from .models import Flag, FlagComment
@@ -71,9 +72,9 @@ class FlagAdmin(admin.ModelAdmin):
         else:
             return False
 
-        return '<a href="%s">Go to Admin Page of Post</a>' % reverse('admin:areas_%spost_change' % post.area, args=(post.pk,))
-
-    url.allow_tags = True
+        return format_html(
+            '<a href="{}">Go to Admin Page of Post</a>',
+            reverse('admin:areas_%spost_change' % post.area, args=(post.pk,)))
 
     def has_add_permission(self, request):
         return False
