@@ -16,6 +16,45 @@ To make an anonym post, set `anonym` to `true`.
 On an anonym post `author` is always `null`, but `author` can also be `null` when the post wasn't anonym.
 
 
+Drafts
+======
+
+Drafts can not be viewed by other users, are assigned an id, that they will
+keep even after they are published. Drafts are not shown as Own Posts.
+
+Create a draft
+--------------
+
+Drafts can be created by sending a `POST`-ing them to `/areas/<area>/drafts`.
+
+
+Editing and deleting a draft
+----------------------------
+
+Drafts can be deleted with `DELETE` and edited with `PUT` and `PATCH` requests
+at the `/areas/<area>/drafts/<id>` endpoint.
+
+
+Listing drafts
+--------------
+
+All current drafts of a user can be viewed with
+a `GET` request to `/areas/<area>/drafts/`.
+
+
+Publishing drafts
+-----------------
+
+Publishing a draft converts it to a normal post, therefore removes it from
+the list of drafts, adds it to the list of own posts and makes it available
+in the queue of other users.
+
+To publish a draft make an empty
+`POST` request to `/areas/<area>/drafts/<id>/publish/`.
+
+Posts cannot be converted back into the draft stage.
+
+
 Getting Posts
 =============
 
@@ -27,7 +66,7 @@ To refill and retrieve the users post make an :doc:`authenticated <../auth>`
 
 
 Own Posts
-==============
+=========
 
 To list all the own posts, make a `GET` request to `/areas/<area>/own/`
 

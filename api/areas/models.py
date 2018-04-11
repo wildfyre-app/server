@@ -3,8 +3,14 @@ from random import randint, sample
 from django.conf import settings
 from django.db import models
 from django.db.models import F
+from django.utils import timezone
 
 from .registry import registry
+
+
+class PostManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(draft=False)
 
 
 class Post(models.Model):
@@ -17,16 +23,20 @@ class Post(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False)  # Might be null, but must only when user gets deleted
     anonym = models.BooleanField(default=False)
     nonce = models.IntegerField(default=generate_nonce)  # To prevent malicious users from trying pk's
-    created = models.DateTimeField(auto_now_add=True)
-    active = models.BooleanField(default=True)
+    created = models.DateTimeField(default=timezone.now)
+    draft = models.BooleanField(default=False, db_index=True)
+    active = models.BooleanField(default=False, db_index=True)
     text = models.TextField()
 
     # Post stack
-    stack_outstanding = models.IntegerField()
+    stack_outstanding = models.IntegerField(default=0)
     stack_assigned = models.ManyToManyField(settings.AUTH_USER_MODEL, db_index=True, related_name='%(class)s_assigned')
     stack_done = models.ManyToManyField(settings.AUTH_USER_MODEL, db_index=True, related_name='%(class)s_done')
 
     subscriber = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='%(class)s_subscriber')
+
+    objects = PostManager()
+    all_objects = models.Manager()
 
     class Meta:
         ordering = ['pk']
@@ -39,12 +49,18 @@ class Post(models.Model):
 
         if self.area not in registry.areas:
             raise ValueError("'%s' is not a valid Area" % self.area)
-        if new:
-            self.stack_outstanding = self.get_spread(self.area, self.author)
+        if new and not self.draft:
+            self.activate()
         super().save(force_insert, force_update, using, update_fields)
         if new:
             self.stack_done.add(self.author)
             self.subscriber.add(self.author)
+
+    def activate(self):
+        self.draft = False
+        self.created = timezone.now()
+        self.active = True
+        self.stack_outstanding = self.get_spread(self.area, self.author)
 
     def get_uri_key(self):
         """
@@ -59,6 +75,12 @@ class Post(models.Model):
         if self.anonym or self.author is None:
             return None
         return self.author.profile
+
+    def publish(self):
+        if not self.draft:
+            raise ValueError("%s is not a draft." % self)
+
+        self.activate()
 
     @classmethod
     def get_stack(cls, area, user):

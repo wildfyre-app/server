@@ -159,6 +159,115 @@ class OwnTest(APITestCase):
 
 
 @unittest.skipUnless(registry.areas, "No areas defined")
+class DraftTest(APITestCase):
+    def setUp(self):
+        # Area to test with, use first area
+        self.area = list(registry.areas)[0]
+        # Test User
+        self.user = get_user_model().objects.create_user(
+            username='user', password='secret')
+
+        self.user_author = get_user_model().objects.create_user(
+            username='author', password='secret')
+
+        # Test Posts
+        self.postModel = registry.get_area(self.area).Post()
+        self.post = self.postModel.objects.create(author=self.user_author, text="Hi there", draft=True)
+
+    def test_not_authenticated(self):
+        """
+        Unauthenticated Users shouldn't be able to view this
+        """
+        response = self.client.get(reverse('areas:drafts', kwargs={'area': self.area}))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_own(self):
+        """
+        Try to get Posts, 1 post is available
+        """
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.get(reverse('areas:drafts', kwargs={'area': self.area}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 1)
+
+    def test_get_own_none(self):
+        """
+        Try to get Posts, none available
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse('areas:drafts', kwargs={'area': self.area}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 0)
+
+    def test_draft_detail(self):
+        """
+        Try to get Draft Detail page of own draft
+        """
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.get(reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_detail_of_draft(self):
+        """
+        Try to get the normal detail page of a post that is in draft status.
+        This should fail with a 404.
+        """
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.get(reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_modify_draft(self):
+        """
+        Drafts can still be modified
+        """
+        newText = "Modified this draft"
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.patch(
+            reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            {'text': newText})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Refresh object form db (can't just use del, because default manager doesn't find drafts)
+        post = self.postModel.all_objects.get(pk=self.post.pk)
+        self.assertEqual(post.text, newText)
+        self.assertTrue(post.draft)  # Must still be a draft
+
+    def test_delete_draft(self):
+        """
+        Drafts should be deletable
+        """
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.delete(reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(self.postModel.all_objects.filter(pk=self.post.pk).exists())
+
+    def test_publish_draft(self):
+        """
+        Try to publish a draft
+        """
+        beforeRequest = timezone.now()
+
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.post(reverse('areas:draft-publish', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Refresh object form db
+        post = self.postModel.objects.get(pk=self.post.pk)  # Should be available in objects manager now
+        self.assertFalse(post.draft)
+        self.assertGreater(post.created, beforeRequest)
+        self.assertTrue(post.active)
+        self.assertEqual(post.stack_outstanding, self.user_author.reputation_set.get(area=self.area).spread)
+
+
+@unittest.skipUnless(registry.areas, "No areas defined")
 class DetailTest(APITestCase):
     def setUp(self):
         # Area to test with, use first area
@@ -664,7 +773,9 @@ class EnforceBanTest(APITestCase):
 
         goodguy = get_user_model().objects.create_user(
             username='goodguy', password='secret')
-        self.post = registry.get_area(self.area).Post().objects.create(text="Sample Post", author=goodguy)
+
+        self.postModel = registry.get_area(self.area).Post()
+        self.post = self.postModel.objects.create(text="Sample Post", author=goodguy)
 
         # All requests should be authenticated as the banned user
         self.client.force_authenticate(user=self.user)
@@ -676,6 +787,28 @@ class EnforceBanTest(APITestCase):
         response = self.client.post(reverse('areas:queue', kwargs={'area': self.area}), {'text': 'Hello World'})
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_ban_publish_draft(self):
+        """
+        Test if banning of posting is enforced for drafts
+        """
+        post = self.postModel.all_objects.create(text="Sample Draft", author=self.user, draft=True)
+        
+        response = self.client.post(reverse('areas:draft-publish', kwargs={'area': self.area, 'pk': post.pk, 'nonce': post.nonce}))
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        post = self.postModel.all_objects.get(pk=post.pk)
+        self.assertTrue(post.draft)
+
+    def test_ban_allow_draft(self):
+        """
+        Banning should not prevent the creation of Drafts
+        """
+        response = self.client.post(reverse('areas:drafts', kwargs={'area': self.area}), {'text': 'Hello World'})
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        post = self.postModel.all_objects.get(author=self.user)
+        self.assertTrue(post.draft)  # Must be a draft
 
     def test_ban_comment(self):
         """

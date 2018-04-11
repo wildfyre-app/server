@@ -1,7 +1,7 @@
 from django.db import models
 
 from .admin import PostAdmin
-from .models import Post, Comment, Reputation
+from .models import Post, Comment, Reputation, PostManager
 from .serializers import PostSerializer, CommentSerializer, ReputationSerializer
 
 
@@ -60,19 +60,20 @@ class Area:
         attrs = {
             '__module__': __name__,
             'objects': cls.get_proxy_manager(),
+            'all_objects': cls.get_proxy_manager(True),
             'Meta': cls.get_proxy_meta(),
         }
         return attrs
 
     @classmethod
-    def get_proxy_manager(cls):
+    def get_proxy_manager(cls, all=False):
         """
         Return the manager to be used in the proxy model.
         """
         def get_queryset(self):
             return super(self.__class__, self).get_queryset().filter(area=cls.name)
 
-        manager = type('PostManager', (models.Manager,), {'__module': __name__, })
+        manager = type('PostManager', (models.Manager if all else PostManager,), {'__module': __name__, })
         setattr(manager, get_queryset.__name__, get_queryset)
         return manager()
 

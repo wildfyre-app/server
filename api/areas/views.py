@@ -1,4 +1,5 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, mixins, permissions, status
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db.models import F
@@ -77,6 +78,21 @@ class OwnView(generics.ListAPIView):
         return area.Post().objects.filter(author=self.request.user)
 
 
+class DraftListView(OwnView, mixins.CreateModelMixin):
+    """
+    Retrive or create draft posts
+    """
+    def get_queryset(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.Post().all_objects.filter(author=self.request.user, draft=True)
+
+    def post(self, request, area):
+        return self.create(request)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, area=self.kwargs.get('area'), draft=True)
+
+
 class SubscribedView(generics.ListAPIView):
     """
     List all posts subscribed to
@@ -133,6 +149,52 @@ class DetailView(generics.RetrieveDestroyAPIView):
             serializer.save(author=request.user, post=post)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DraftDetailView(DetailView, mixins.UpdateModelMixin):
+    permission_classes = (permissions.IsAuthenticated,)
+    http_method_names = ['get', 'put', 'patch', 'delete', 'head', 'options', 'trace']  # Default without POST
+
+    def get_queryset(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.Post().all_objects.filter(author=self.request.user, draft=True)
+
+    def post(self, request, area, pk, nonce):
+        raise MethodNotAllowed("POST")
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+
+class PublishDraftView(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated, MayPost)
+
+    def get_serializer_class(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.post_serializer
+
+    def get_queryset(self):
+        area = registry.get_area(self.kwargs.get('area'))
+        return area.Post().all_objects.filter(author=self.request.user, draft=True)
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        pk = self.kwargs.get('pk')
+        nonce = self.kwargs.get('nonce')
+
+        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def post(self, request, area, pk, nonce):
+        obj = self.get_object()
+        obj.publish()
+        obj.save()
+        return Response(self.get_serializer(obj).data)
 
 
 class CommentView(generics.RetrieveDestroyAPIView):
