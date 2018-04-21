@@ -75,7 +75,7 @@ class OwnView(generics.ListAPIView):
 
     def get_queryset(self):
         area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().objects.filter(author=self.request.user)
+        return area.Post().objects.filter(author=self.request.user).order_by('-created')
 
 
 class DraftListView(OwnView, mixins.CreateModelMixin):
@@ -105,7 +105,7 @@ class SubscribedView(generics.ListAPIView):
 
     def get_queryset(self):
         area = registry.get_area(self.kwargs.get('area'))
-        return self.request.user.post_subscriber.filter(area=area.name)
+        return self.request.user.post_subscriber.filter(area=area.name).order_by('-created')
 
 
 class DetailView(generics.RetrieveDestroyAPIView):
