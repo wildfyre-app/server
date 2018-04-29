@@ -670,8 +670,9 @@ class NotificationTest(APITestCase):
             self.post_comment()
 
         self.client.force_authenticate(user=self.user_author)
-        self.client.delete(reverse('areas:notification'))
+        response = self.client.delete(reverse('areas:notification'))
 
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(self.user_author.comment_unread.exists())
 
     def test_subscription_list(self):

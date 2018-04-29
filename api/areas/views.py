@@ -14,6 +14,54 @@ from .registry import registry
 from flags.serializers import FlagSerializer
 
 
+class AreaMixin():
+    _area = None
+
+    @property
+    def area(self):
+        if self._area is None:
+            self._area = registry.get_area(self.kwargs.get('area'))
+
+        return self._area
+
+
+class PostSerializerMixin(AreaMixin):
+    def get_post_serializer_class(self):
+        return self.area.post_serializer
+
+
+class PostObjectMixin(PostSerializerMixin):
+    post_pk_field = 'pk'
+    post_nonce_field = 'nonce'
+
+    def get_post_queryset(self):
+        return self.area.Post().objects.all()
+
+    def get_post(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        pk = self.kwargs.get(self.post_pk_field)
+        nonce = self.kwargs.get(self.post_nonce_field)
+
+        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+
+class CommentObjectMixin(PostObjectMixin):
+    comment_pk_field = 'comment'
+
+    def get_comment(self):
+        post = self.get_post()
+        comment = self.kwargs.get('comment')
+
+        obj = get_object_or_404(post.comment_set.all(), pk=comment)
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+
+# region
 class AreaView(generics.ListAPIView):
     serializer_class = serializers.AreaSerializer
     pagination_class = None
@@ -22,6 +70,117 @@ class AreaView(generics.ListAPIView):
         return registry.areas.values()
 
 
+class QueueView(generics.ListCreateAPIView, PostSerializerMixin):
+    """
+    Retrive queue or post new.
+    """
+    permission_classes = (permissions.IsAuthenticated, MayPost)
+
+    def get_serializer_class(self):
+        return self.get_post_serializer_class()
+
+    def get_queryset(self):
+        return self.area.Post().get_stack(self.area, self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, area=self.area.name)
+
+
+class OwnView(generics.ListAPIView, PostSerializerMixin):
+    """
+    List own posts
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_serializer_class(self):
+        return self.get_post_serializer_class()
+
+    def get_queryset(self):
+        return self.area.Post().objects.filter(author=self.request.user).order_by('-created')
+
+
+class DetailView(generics.RetrieveDestroyAPIView, PostObjectMixin):
+    """
+    Retrive a specific post or post a comment
+    """
+    permission_classes = (IsOwnerOrReadCreateOnly, permissions.IsAuthenticatedOrReadOnly, MayComment)
+
+    def get_serializer_class(self):
+        return self.get_post_serializer_class()
+
+    def get_queryset(self):
+        return self.get_post_queryset()
+
+    def get(self, request, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            self.area.mark_read(self.request.user, self.get_object())
+        return super().get(request, *args, **kwargs)
+
+    def get_comment_serializer_class(self):
+        return self.area.comment_serializer
+
+    def get_object(self):
+        return self.get_post()
+
+    def post(self, request, area, pk, nonce):
+        post = self.get_object()
+        serializer = self.get_comment_serializer_class()(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(author=request.user, post=post)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CommentView(generics.RetrieveDestroyAPIView, CommentObjectMixin):
+    """
+    View a comment of a post
+    """
+    permission_classes = (IsOwnerOrReadOnly,)
+
+    def get_serializer_class(self):
+        return self.area.comment_serializer
+
+    def get_queryset(self):
+        return self.area.Post().objects.all()
+
+    def get_object(self):
+        return self.get_comment()
+
+
+class SpreadView(generics.CreateAPIView, PostObjectMixin):
+    """
+    Spread a card
+    """
+    serializer_class = serializers.SpreadSerializer
+    permission_classes = (permissions.IsAuthenticated, IsInStack)
+
+    def get_queryset(self):
+        return self.get_post_queryset()
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code is status.HTTP_201_CREATED:
+            response.status_code = status.HTTP_200_OK
+        return response
+
+    def perform_create(self, serializer):
+        obj = self.get_post()
+
+        # Handle Spread
+        if serializer.validated_data.get('spread'):
+            obj.stack_outstanding = F('stack_outstanding') + obj.get_spread(self.area.name, self.request.user)
+
+        # Remove from stack
+        obj.stack_done.add(self.request.user)
+        obj.stack_assigned.remove(self.request.user)
+        obj.save()
+
+        serializer.save()
+# endregion
+
+
+# region Notifications
 class NotificationView(generics.ListAPIView):
     serializer_class = serializers.NotificationSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -45,229 +204,20 @@ class NotificationView(generics.ListAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class QueueView(generics.ListCreateAPIView):
-    """
-    Retrive queue or post new.
-    """
-    permission_classes = (permissions.IsAuthenticated, MayPost)
-
-    def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.post_serializer
-
-    def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().get_stack(area, self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user, area=self.kwargs.get('area'))
-
-
-class OwnView(generics.ListAPIView):
-    """
-    List own posts
-    """
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.post_serializer
-
-    def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().objects.filter(author=self.request.user).order_by('-created')
-
-
-class DraftListView(OwnView, mixins.CreateModelMixin):
-    """
-    Retrive or create draft posts
-    """
-    def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().all_objects.filter(author=self.request.user, draft=True)
-
-    def post(self, request, area):
-        return self.create(request)
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user, area=self.kwargs.get('area'), draft=True)
-
-
-class SubscribedView(generics.ListAPIView):
+class SubscribedView(generics.ListAPIView, PostSerializerMixin):
     """
     List all posts subscribed to
     """
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.post_serializer
+        return self.get_post_serializer_class()
 
     def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return self.request.user.post_subscriber.filter(area=area.name).order_by('-created')
+        return self.request.user.post_subscriber.filter(area=self.area.name).order_by('-created')
 
 
-class DetailView(generics.RetrieveDestroyAPIView):
-    """
-    Retrive a specific post or post a comment
-    """
-    permission_classes = (IsOwnerOrReadCreateOnly, permissions.IsAuthenticatedOrReadOnly, MayComment)
-
-    def get(self, request, *args, **kwargs):
-        if self.request.user.is_authenticated:
-            registry.get_area(self.kwargs.get('area')).mark_read(self.request.user, self.get_object())
-        return super().get(request, *args, **kwargs)
-
-    def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.post_serializer
-
-    def get_comment_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.comment_serializer
-
-    def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().objects.all()
-
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        pk = self.kwargs.get('pk')
-        nonce = self.kwargs.get('nonce')
-
-        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
-
-        self.check_object_permissions(self.request, obj)
-        return obj
-
-    def post(self, request, area, pk, nonce):
-        post = self.get_object()
-        serializer = self.get_comment_serializer_class()(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save(author=request.user, post=post)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class DraftDetailView(DetailView, mixins.UpdateModelMixin):
-    permission_classes = (permissions.IsAuthenticated,)
-    http_method_names = ['get', 'put', 'patch', 'delete', 'head', 'options', 'trace']  # Default without POST
-
-    def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().all_objects.filter(author=self.request.user, draft=True)
-
-    def post(self, request, area, pk, nonce):
-        raise MethodNotAllowed("POST")
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-
-class PublishDraftView(generics.GenericAPIView):
-    permission_classes = (permissions.IsAuthenticated, MayPost)
-
-    def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.post_serializer
-
-    def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().all_objects.filter(author=self.request.user, draft=True)
-
-    def get_object(self):
-        queryset = self.get_queryset()
-        pk = self.kwargs.get('pk')
-        nonce = self.kwargs.get('nonce')
-
-        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
-
-        self.check_object_permissions(self.request, obj)
-        return obj
-
-    def post(self, request, area, pk, nonce):
-        obj = self.get_object()
-        obj.publish()
-        obj.save()
-        return Response(self.get_serializer(obj).data)
-
-
-class CommentView(generics.RetrieveDestroyAPIView):
-    """
-    View a comment of a post
-    """
-    permission_classes = (IsOwnerOrReadOnly,)
-
-    def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.comment_serializer
-
-    def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().objects.all()
-
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        post = self.kwargs.get('pk')
-        nonce = self.kwargs.get('nonce')
-        comment = self.kwargs.get('comment')
-
-        post = get_object_or_404(queryset, pk=post, nonce=nonce)
-        obj = get_object_or_404(post.comment_set.all(), pk=comment)
-
-        self.check_object_permissions(self.request, obj)
-        return obj
-
-
-class SpreadView(generics.CreateAPIView):
-    """
-    Spread a card
-    """
-    serializer_class = serializers.SpreadSerializer
-    permission_classes = (permissions.IsAuthenticated, IsInStack)
-
-    def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().objects.all()
-
-    def get_post(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        pk = self.kwargs.get('pk')
-        nonce = self.kwargs.get('nonce')
-
-        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
-
-        self.check_object_permissions(self.request, obj)
-        return obj
-
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        response.status_code = status.HTTP_200_OK
-        return response
-
-    def perform_create(self, serializer):
-        area = registry.get_area(self.kwargs.get('area'))
-        obj = self.get_post()
-
-        # Handle Spread
-        if serializer.validated_data.get('spread'):
-            obj.stack_outstanding = F('stack_outstanding') + obj.get_spread(self.kwargs.get('area'), self.request.user)
-
-        # Remove from stack
-        obj.stack_done.add(self.request.user)
-        obj.stack_assigned.remove(self.request.user)
-        obj.save()
-
-        serializer.save()
-
-
-class SubscribeView(generics.RetrieveUpdateAPIView):
+class SubscribeView(generics.RetrieveUpdateAPIView, PostObjectMixin):
     """
     Subscribe / Unsubscribe to a post
     """
@@ -275,19 +225,7 @@ class SubscribeView(generics.RetrieveUpdateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().objects.all()
-
-    def get_post(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        pk = self.kwargs.get('pk')
-        nonce = self.kwargs.get('nonce')
-
-        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
-
-        self.check_object_permissions(self.request, obj)
-
-        return obj
+        return self.get_post_queryset()
 
     def get_object(self):
         return type("", (), dict(
@@ -306,24 +244,86 @@ class SubscribeView(generics.RetrieveUpdateAPIView):
             obj.subscriber.remove(self.request.user)
 
         serializer.save()
+# endregion
 
 
-class ReputationView(generics.RetrieveAPIView):
+# region Drafts
+class DraftPostObjectMixin(PostObjectMixin):
+    def get_draft_post_queryset(self):
+        return self.area.Post().all_objects.filter(author=self.request.user, draft=True)
+
+    def get_post_queryset(self):
+        return self.get_draft_post_queryset()
+
+
+class DraftListView(OwnView, mixins.CreateModelMixin, DraftPostObjectMixin):
+    """
+    Retrive or create draft posts
+    """
+    def get_queryset(self):
+        return self.get_draft_post_queryset()
+
+    def post(self, request, area):
+        return self.create(request)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, area=self.area.name, draft=True)
+
+
+class DraftDetailView(DetailView, mixins.UpdateModelMixin, DraftPostObjectMixin):
+    permission_classes = (permissions.IsAuthenticated,)
+    http_method_names = ['get', 'put', 'patch', 'delete', 'head', 'options', 'trace']  # Default without POST
+
+    def get_queryset(self):
+        return self.get_draft_post_queryset()
+
+    def post(self, request, area, pk, nonce):
+        raise MethodNotAllowed("POST")
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+
+class PublishDraftView(generics.GenericAPIView, DraftPostObjectMixin):
+    permission_classes = (permissions.IsAuthenticated, MayPost)
+
+    def get_serializer_class(self):
+        return self.get_post_serializer_class()
+
+    def get_queryset(self):
+        return self.get_draft_post_queryset()
+
+    def get_object(self):
+        return self.get_post()
+
+    def post(self, request, area, pk, nonce):
+        obj = self.get_object()
+        obj.publish()
+        obj.save()
+        return Response(self.get_serializer(obj).data)
+# endregion
+
+
+# region Reputation
+class ReputationView(generics.RetrieveAPIView, AreaMixin):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_serializer_class(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.rep_serializer
+        return self.area.rep_serializer
 
     def get_object(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        obj, _ = area.rep_model.objects.get_or_create(area=area.name, user=self.request.user)
+        obj, _ = self.area.rep_model.objects.get_or_create(area=self.area.name, user=self.request.user)
 
         self.check_object_permissions(self.request, obj)
         return obj
+# endregion
 
 
-class FlagPostView(generics.CreateAPIView):
+# region Flags
+class FlagPostView(generics.CreateAPIView, PostObjectMixin):
     """
     Flag Post
     """
@@ -331,25 +331,17 @@ class FlagPostView(generics.CreateAPIView):
     permission_classes = (permissions.IsAuthenticated, MayFlagPost)
 
     def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().objects.all()
+        return self.get_post_queryset()
 
     def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        pk = self.kwargs.get('pk')
-        nonce = self.kwargs.get('nonce')
-
-        obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
-
-        self.check_object_permissions(self.request, obj)
-        return obj
+        return self.get_post()
 
     def perform_create(self, serializer):
         post = self.get_object()
         serializer.save(obj=post, reporter=self.request.user)
 
 
-class FlagCommentView(generics.CreateAPIView):
+class FlagCommentView(generics.CreateAPIView, CommentObjectMixin):
     """
     Flag Comment
     """
@@ -357,22 +349,12 @@ class FlagCommentView(generics.CreateAPIView):
     permission_classes = (permissions.IsAuthenticated, MayFlagComment)
 
     def get_queryset(self):
-        area = registry.get_area(self.kwargs.get('area'))
-        return area.Post().objects.all()
+        return self.area.Post().objects.all()
 
     def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        post = self.kwargs.get('pk')
-        nonce = self.kwargs.get('nonce')
-        comment = self.kwargs.get('comment')
-
-        post = get_object_or_404(queryset, pk=post, nonce=nonce)
-        obj = get_object_or_404(post.comment_set.all(), pk=comment)
-
-        self.check_object_permissions(self.request, obj)
-        return obj
+        return self.get_comment()
 
     def perform_create(self, serializer):
         comment = self.get_object()
         serializer.save(obj=comment, reporter=self.request.user)
+# endregion
