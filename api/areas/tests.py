@@ -420,12 +420,23 @@ class CommentTest(APITestCase):
         self.assertEqual(self.post.comment_set.count(), 1)
 
     def test_delete_comment(self):
-        self.post.comment_set.create(author=self.user_author, text="Hi")
+        comment = self.post.comment_set.create(author=self.user_author, text="Hi")
         self.assertEqual(self.post.comment_set.count(), 1)  # To check it worked
 
         self.client.force_authenticate(user=self.user_author)
         response = self.client.delete(
-            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+            reverse('areas:comment', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'comment': comment.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(self.post.comment_set.count(), 0)
+
+    def test_delete_comment_not_ownpost(self):
+        comment = self.post.comment_set.create(author=self.user, text="Hi")
+        self.assertEqual(self.post.comment_set.count(), 1)  # To check it worked
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.delete(
+            reverse('areas:comment', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'comment': comment.pk}))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(self.post.comment_set.count(), 0)

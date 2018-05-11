@@ -37,27 +37,28 @@ class PostObjectMixin(PostSerializerMixin):
     def get_post_queryset(self):
         return self.area.Post().objects.all()
 
-    def get_post(self):
+    def get_post(self, check_permissions=True):
         queryset = self.filter_queryset(self.get_queryset())
         pk = self.kwargs.get(self.post_pk_field)
         nonce = self.kwargs.get(self.post_nonce_field)
 
         obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
-
-        self.check_object_permissions(self.request, obj)
+        if check_permissions:
+            self.check_object_permissions(self.request, obj)
         return obj
 
 
 class CommentObjectMixin(PostObjectMixin):
     comment_pk_field = 'comment'
 
-    def get_comment(self):
-        post = self.get_post()
+    def get_comment(self, check_permissions=True):
+        post = self.get_post(check_permissions=False)
         comment = self.kwargs.get('comment')
 
         obj = get_object_or_404(post.comment_set.all(), pk=comment)
 
-        self.check_object_permissions(self.request, obj)
+        if check_permissions:
+            self.check_object_permissions(self.request, obj)
         return obj
 
 
