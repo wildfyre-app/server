@@ -1,3 +1,5 @@
+import os
+import uuid
 from random import randint, sample
 
 from django.conf import settings
@@ -6,6 +8,10 @@ from django.db.models import F
 from django.utils import timezone
 
 from .registry import registry
+
+
+def image_path(instance, filename):
+    return 'images/%u%s' % (uuid.uuid4(), os.path.splitext(filename)[1])
 
 
 class PostManager(models.Manager):
@@ -27,6 +33,7 @@ class Post(models.Model):
     draft = models.BooleanField(default=False, db_index=True)
     active = models.BooleanField(default=False, db_index=True)
     text = models.TextField()
+    image = models.ImageField(upload_to=image_path, null=True, blank=True, default=None)
 
     # Post stack
     stack_outstanding = models.IntegerField(default=0)
@@ -42,7 +49,7 @@ class Post(models.Model):
         ordering = ['pk']
 
     def __str__(self):
-        return self.get_uri_key()
+        return "%s/%s" % (self.area, self.get_uri_key())
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         new = self.pk is None
@@ -120,6 +127,19 @@ class Post(models.Model):
     get_uri_key.short_description = 'id'
 
 
+class PostImage(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='additional_images')
+    num = models.IntegerField()
+    image = models.ImageField(upload_to=image_path)
+    comment = models.CharField(max_length=128, blank=True, default="")
+
+    MAX_NUM = 4
+
+    class Meta:
+        ordering = ['num']
+        unique_together = ('post', 'num')
+
+
 class Comment(models.Model):
     """
     Model for Comments. Can only be used when the default Post Model is used
@@ -128,6 +148,7 @@ class Comment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created = models.DateTimeField(auto_now_add=True)
     text = models.TextField()
+    image = models.ImageField(upload_to=image_path, null=True, blank=True, default=None)
 
     unread = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='%(class)s_unread')
 

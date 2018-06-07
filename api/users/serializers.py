@@ -8,7 +8,7 @@ from .models import Profile
 
 class ProfileSerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='user.username')
-    avatar = serializers.ImageField(validators=[FileSizeValidator(0.5)])
+    avatar = serializers.ImageField(allow_null=True, max_length=100, required=False, validators=[FileSizeValidator(0.5)])
     banned = serializers.SerializerMethodField()
 
     class Meta:

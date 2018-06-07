@@ -17,6 +17,7 @@ Welcome to the WildFyre API documentation!
     bans
     choices
     flag
+    pagination
     users
 
 

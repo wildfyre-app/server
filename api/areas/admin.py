@@ -2,7 +2,15 @@ from django.contrib import admin
 from django.contrib.admin.options import IncorrectLookupParameters
 from django.utils.encoding import force_text
 
-from .models import Post, Comment
+from .models import Post, PostImage, Comment
+
+
+class PostImageInline(admin.StackedInline):
+    model = PostImage
+    extra = 0
+    fields = ('num', 'image', 'comment')
+    ordering = ('num',)
+    max_num = PostImage.MAX_NUM
 
 
 class CommentInline(admin.TabularInline):
@@ -45,9 +53,10 @@ class PostDraftFilter(admin.filters.SimpleListFilter):
 
 
 class PostAdmin(admin.ModelAdmin):
-    fields = ('active', 'author', 'anonym', 'text',)
+    fields = ('active', 'author', 'anonym', 'text', 'image',)
+    list_display = ('get_uri_key', 'author', 'anonym', 'text', 'stack_outstanding', 'active',)
     list_display = ('get_uri_key', 'author', 'anonym', 'draft', 'text', 'stack_outstanding', 'active',)
-    inlines = [CommentInline, ]
+    inlines = [PostImageInline, CommentInline, ]
 
     list_filter = ['anonym', 'created', PostDraftFilter, ]
 

@@ -1,6 +1,7 @@
 from rest_framework import generics, mixins, permissions, status
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.db.models import F
 
@@ -51,6 +52,9 @@ class PostObjectMixin(PostSerializerMixin):
 class CommentObjectMixin(PostObjectMixin):
     comment_pk_field = 'comment'
 
+    def get_comment_serializer_class(self):
+        return self.area.comment_serializer
+
     def get_comment(self, check_permissions=True):
         post = self.get_post(check_permissions=False)
         comment = self.kwargs.get('comment')
@@ -100,14 +104,17 @@ class OwnView(generics.ListAPIView, PostSerializerMixin):
         return self.area.Post().objects.filter(author=self.request.user).order_by('-created')
 
 
-class DetailView(generics.RetrieveDestroyAPIView, PostObjectMixin):
+class DetailView(generics.RetrieveDestroyAPIView, mixins.CreateModelMixin, CommentObjectMixin):  # PostObjectMixin included in CommentObjectMixin
     """
     Retrive a specific post or post a comment
     """
     permission_classes = (IsOwnerOrReadCreateOnly, permissions.IsAuthenticatedOrReadOnly, MayComment)
 
     def get_serializer_class(self):
-        return self.get_post_serializer_class()
+        if self.request.method == 'POST':
+            return self.get_comment_serializer_class()
+        else:
+            return self.get_post_serializer_class()
 
     def get_queryset(self):
         return self.get_post_queryset()
@@ -117,20 +124,14 @@ class DetailView(generics.RetrieveDestroyAPIView, PostObjectMixin):
             self.area.mark_read(self.request.user, self.get_object())
         return super().get(request, *args, **kwargs)
 
-    def get_comment_serializer_class(self):
-        return self.area.comment_serializer
-
     def get_object(self):
         return self.get_post()
 
-    def post(self, request, area, pk, nonce):
-        post = self.get_object()
-        serializer = self.get_comment_serializer_class()(data=request.data)
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, post=self.get_object())
 
-        if serializer.is_valid():
-            serializer.save(author=request.user, post=post)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
 
 
 class CommentView(generics.RetrieveDestroyAPIView, CommentObjectMixin):
@@ -286,6 +287,35 @@ class DraftDetailView(DetailView, mixins.UpdateModelMixin, DraftPostObjectMixin)
 
     def patch(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
+
+
+class DraftImageView(generics.RetrieveUpdateDestroyAPIView, DraftPostObjectMixin):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = serializers.PostImageSerializer
+
+    def get_queryset(self):
+        return self.get_draft_post_queryset()
+
+    def get_object(self):
+        img_pk = self.kwargs.get('img')
+
+        post = self.get_post()
+
+        try:
+            return post.additional_images.get(num=img_pk)
+        except serializers.PostImage.DoesNotExist:
+            if int(img_pk) >= serializers.PostImage.MAX_NUM:
+                # Do the check here, so if MAX_NUM is lowered, old images can still be accessed
+                raise Http404()
+            # Don't use .create().
+            # The PostImage object created here is not saved to the database, this will only happen,
+            # when the user updates it.
+            return serializers.PostImage(post=post, num=int(img_pk))
+
+    def perform_destroy(self, instance):
+        # Check if object exists
+        if instance.pk is not None:
+            return super().perform_destroy(instance)
 
 
 class PublishDraftView(generics.GenericAPIView, DraftPostObjectMixin):

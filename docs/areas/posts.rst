@@ -55,6 +55,30 @@ To publish a draft make an empty
 Posts cannot be converted back into the draft stage.
 
 
+Additional Images
+=================
+
+Additional Images can be added to a post while it is in draft stage.
+They have an endpoint at `/areas/<area>/drafts/<id>/img/<image_id>/`.
+Not existing images will not appear in the `additional_images` list on the post
+and will be set to `null` on their endpoint.
+The `img` endpoint does only exists for drafts.
+
+Adding or changing an Image
+---------------------------
+
+Because not existing images are represented as `null`, adding an image
+is the same as changing it's value to something else than `null`.
+
+Use `PUT` or `PATCH` requests to add or change an Image or it's comment.
+
+Removing an Image
+-----------------
+
+Instead of a `PUT`-request that sets `image` to `null` a `DELTE`-request
+should be used to remove an image.
+
+
 Getting Posts
 =============
 

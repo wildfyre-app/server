@@ -4,6 +4,9 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from io import BytesIO
+from PIL import Image
+
 from django.contrib.auth import get_user_model
 
 from .registry import registry
@@ -102,15 +105,36 @@ class QueueTest(APITestCase):
         """
         Create a new post
         """
+        # Delete Create Object
+        for p in registry.get_area(self.area).Post().objects.all():
+            p.delete()
+
         self.client.force_authenticate(user=self.user)
         response = self.client.post(reverse('areas:queue', kwargs={'area': self.area}), {'text': "Hi"})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(registry.get_area(self.area).Post().objects.count(), 1)
 
+    def test_create_with_image(self):
+        """
+        Create a new post, that contains a head image
+        """
         # Delete Create Object
         for p in registry.get_area(self.area).Post().objects.all():
             p.delete()
+
+        self.client.force_authenticate(user=self.user)
+
+        # Image
+        img = BytesIO()
+        img.name = "test.png"
+        Image.new('RGB', (1, 1)).save(img, "PNG")
+        img.seek(0)
+
+        response = self.client.post(reverse('areas:queue', kwargs={'area': self.area}), {'text': "Hi", 'image': img})
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(registry.get_area(self.area).Post().objects.count(), 1)
 
 
 @unittest.skipUnless(registry.areas, "No areas defined")
@@ -238,6 +262,22 @@ class DraftTest(APITestCase):
         self.assertEqual(post.text, newText)
         self.assertTrue(post.draft)  # Must still be a draft
 
+    def test_remove_image(self):
+        """
+        Try to remove an already attached image
+        """
+        self.client.force_authenticate(user=self.user_author)
+        response = self.client.patch(
+            reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            {'image': None}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Refresh object form db (can't just use del, because default manager doesn't find drafts)
+        post = self.postModel.all_objects.get(pk=self.post.pk)
+        self.assertFalse(bool(post.image))
+        self.assertTrue(post.draft)  # Must still be a draft
+
     def test_delete_draft(self):
         """
         Drafts should be deletable
@@ -265,6 +305,121 @@ class DraftTest(APITestCase):
         self.assertGreater(post.created, beforeRequest)
         self.assertTrue(post.active)
         self.assertEqual(post.stack_outstanding, self.user_author.reputation_set.get(area=self.area).spread)
+
+
+@unittest.skipUnless(registry.areas, "No areas defined")
+class AdditionalImagesTest(APITestCase):
+    def setUp(self):
+        self.area = list(registry.areas)[0]
+        self.user = get_user_model().objects.create_user(
+            username='user', password='secret')
+
+        # Everything authenticated
+        self.client.force_authenticate(user=self.user)
+
+        self.postModel = registry.get_area(self.area).Post()
+        # Post must be a draft
+        self.post = self.postModel.all_objects.create(author=self.user, text="Hi there", draft=True)
+
+    def get_img_url(self, n):
+        """
+        Get the uri of the image n
+        """
+        return reverse('areas:draft-img', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'img': n})
+
+    def create_image(self):
+        img = BytesIO()
+        img.name = "test.png"
+        Image.new('RGB', (1, 1)).save(img, "PNG")
+        img.seek(0)
+        return img
+
+    def refresh_post(self):
+        self.post = self.postModel.all_objects.get(pk=self.post.pk)
+        return self.post
+
+    def test_add_img(self):
+        """
+        Add an image
+        """
+        response = self.client.put(self.get_img_url(0), {'image': self.create_image()})
+        self.refresh_post()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(self.post.additional_images.filter(num=0).exists())
+        self.assertEqual(self.post.additional_images.get(num=0).comment, "")
+
+    def test_remove_img(self):
+        self.client.put(self.get_img_url(0), {'image': self.create_image()})
+
+        response = self.client.delete(self.get_img_url(0))
+        self.refresh_post()
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(self.post.additional_images.filter(num=0).exists())
+
+    def test_remove_img_not_existing(self):
+        # Make sure there are no images
+        self.post.additional_images.all().delete()
+
+        response = self.client.delete(self.get_img_url(0))
+        self.refresh_post()
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(self.post.additional_images.filter(num=0).exists())
+
+    def test_patch_comment(self):
+        comment = "This is an image"
+
+        self.client.put(self.get_img_url(0), {'image': self.create_image()})
+
+        response = self.client.patch(self.get_img_url(0), {'comment': comment})
+        self.refresh_post()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.post.additional_images.get(num=0).comment, comment)
+
+    def test_img_view_exist(self):
+        self.client.put(self.get_img_url(0), {'image': self.create_image()})
+
+        response = self.client.get(self.get_img_url(0))
+        self.refresh_post()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['num'], 0)
+        self.assertIsNotNone(response.data['image'])
+        self.assertEqual(response.data['comment'], "")
+
+    def test_img_view_not_exist(self):
+        self.post.additional_images.all().delete()
+
+        response = self.client.get(self.get_img_url(0))
+        self.refresh_post()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(self.post.additional_images.filter(num=0).exists())
+        self.assertEqual(response.data['num'], 0)
+        self.assertIsNone(response.data['image'])
+        self.assertEqual(response.data['comment'], "")
+
+    def test_img_display(self):
+        # Make sure only img with num=0 exists
+        self.post.additional_images.all().delete()
+        self.client.put(self.get_img_url(0), {'image': self.create_image()})
+
+        response = self.client.get(reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+
+        images = response.data['additional_images']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(images), 1)
+        self.assertEqual(images[0]['num'], 0)
+        self.assertIsNotNone(images[0]['image'])
+        self.assertEqual(images[0]['comment'], "")
+
+    def test_img_num_to_big(self):
+        response = self.client.get(self.get_img_url(PostImage.MAX_NUM))
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 @unittest.skipUnless(registry.areas, "No areas defined")
@@ -415,6 +570,25 @@ class CommentTest(APITestCase):
         response = self.client.post(
             reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
             {'text': "Hi"})
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(self.post.comment_set.count(), 1)
+
+    def test_create_comment_with_image(self):
+        """
+        A comment can be created with an optional image
+        """
+        self.client.force_authenticate(user=self.user)
+
+        # Image
+        img = BytesIO()
+        img.name = "test.png"
+        Image.new('RGB', (1, 1)).save(img, "PNG")
+        img.seek(0)
+
+        response = self.client.post(
+            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            {'text': "Hi", 'image': img})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(self.post.comment_set.count(), 1)

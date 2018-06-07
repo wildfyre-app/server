@@ -21,6 +21,7 @@ urlpatterns = [
     # Drafts
     path('<slug:area>/drafts/', views.DraftListView.as_view(), name='drafts'),
     re_path(r'^(?P<area>[-a-zA-Z0-9_]+)/drafts/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/$', views.DraftDetailView.as_view(), name='draft-detail'),
+    re_path(r'^(?P<area>[-a-zA-Z0-9_]+)/drafts/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/img/(?P<img>[0-9]+)/$', views.DraftImageView.as_view(), name='draft-img'),
     re_path(r'^(?P<area>[-a-zA-Z0-9_]+)/drafts/(?P<nonce>[0-9]{8})(?P<pk>[0-9]+)/publish/$', views.PublishDraftView.as_view(), name='draft-publish'),
 
     # Reputation
