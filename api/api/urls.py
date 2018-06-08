@@ -21,8 +21,9 @@ urlpatterns = [
     path('bans/', include('bans.urls')),
     path('choices/', include('choices.urls')),
     path('users/', include('users.urls')),
+    path('', include('core.urls')),
 
-    path(r'browse/auth/', include('rest_framework.urls')),
+    path('browse/auth/', include('rest_framework.urls')),
 ]
 
 if settings.DEBUG:

@@ -5,11 +5,17 @@
 # Also see https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 import os
 
+
+# Ensure settings were ajusted
+if os.environ.get('SETUP') is None:
+    raise NotImplementedError("Configuration required. Check production.dist.py")
+
+
 DEBUG = False
 
-SECRET_KEY = None  # Automatically raises exception if missing
+SECRET_KEY = os.environ.get('SECRET_KEY')  # Automatically raises exception if missing
 
-ALLOWED_HOSTS = ['api.wildfyre.net', ]
+ALLOWED_HOSTS = [os.environ.get('ALLOWED_HOST', 'api.wildfyre.net'), ]
 
 
 # Admins
@@ -20,54 +26,43 @@ ADMINS = [('Info-Screen Webmaster', 'webmaster@Info-Screen.me')]
 
 # Logging
 # https://docs.djangoproject.com/en/1.10/ref/settings/#logging
-
-LOG_BASE_PATH = '/var/log/api/'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'default': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(funcName)s:%(lineno)d ~ %(message)s'
+            'format': '[%(asctime)s] [%(process)s] [%(levelname)s] %(name)s:%(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S %z'
         },
     },
     'handlers': {
-        'fileInfo': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': os.environ.get('LOG_LEVEL', 'INFO'),
             'formatter': 'default',
-            'filename': LOG_BASE_PATH + 'info.log',
         },
-        'fileWarning': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'formatter': 'default',
-            'filename': LOG_BASE_PATH + 'warning.log',
-        },
-        'fileError': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'formatter': 'default',
-            'filename': LOG_BASE_PATH + '/error.log',
-        },
+    },
+    'loggers': {
+        # Override the default, it will be handled by the root logger
+        'django': {},
+        'django.server': {},
     },
     'root': {
-        'handlers': ['fileInfo', 'fileWarning', 'fileError', ],
-        'level': 'INFO',
-    },
+        'handlers': ['console', ],
+    }
 }
-
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'api',
-        'USER': 'api',
-        'PASSWORD': '',  # Set password
-        'HOST': '',
-        'PORT': '',
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('DB_NAME', 'api'),
+        'USER': os.environ.get('DB_USER', 'api'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
 }
 
@@ -75,42 +70,42 @@ DATABASES = {
 # E-Mail
 # https://docs.djangoproject.com/en/1.10/topics/email/
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'mail.wildfyre.net'
-EMAIL_PORT = '587'  # Use submission Port
-EMAIL_HOST_USER = 'noreply@wildfyre.net'
-EMAIL_HOST_PASSWORD = ''  # Set password
+EMAIL_BACKEND = os.environ['EMAIL_BACKEND']
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = os.environ.get('EMAIL_PORT', '587')  # Use submission Port
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
 
 EMAIL_SUBJECT_PREFIX = '[WildFyre] '
-DEFAULT_FROM_EMAIL = 'noreply@wildfyre.net'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@wildfyre.net')
 
 
 # reCAPTCHA secret key
 # https://www.google.com/recaptcha/admin
 
-RECAPTCHA_SECRET = ""
+RECAPTCHA_SECRET = os.environ.get('RECAPTCHA_SECRET', '')
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
-STATIC_ROOT = '/var/www/static/api'
-STATIC_URL = 'https://static.wildfyre.net/api/'
+STATIC_ROOT = os.environ.get('STATIC_ROOT', '/data/static')
+STATIC_URL = os.environ['STATIC_URL']
 
-MEDIA_ROOT = '/var/www/upload/api'
-MEDIA_URL = 'https://upload.wildfyre.net/api/'
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', '/data/media')
+MEDIA_URL = os.environ['MEDIA_URL']
 
 
 # Security Settings
-CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 X_FRAME_OPTIONS = 'DENY'
 
 
-# Ensure settings were ajusted
-raise NotImplementedError("Check production.py")
+# Proxy Settings
+USE_X_FORWARDED_PORT = True

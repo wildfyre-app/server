@@ -94,9 +94,11 @@
     <Compile Include="core\tests.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="core\urls.py" />
     <Compile Include="core\validators.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="core\views.py" />
     <Compile Include="core\__init__.py" />
     <Compile Include="flags\admin.py" />
     <Compile Include="flags\apps.py" />
