@@ -29,7 +29,7 @@ class User(AbstractUser):
             # Check if username is unique case-insensitive
             same_name = self.__class__._default_manager.filter(
                 **{self.USERNAME_FIELD + '__iexact': getattr(self, self.USERNAME_FIELD)})
-            if same_name.exists() and same_name.get().pk is not self.pk:
+            if same_name.exists() and same_name.get().pk != self.pk:
                 errors.update(
                     {self.USERNAME_FIELD: self.unique_error_message(self.__class__, (self.USERNAME_FIELD,))}
                 )
