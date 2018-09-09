@@ -60,6 +60,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="areas\registry.py" />
+    <Compile Include="areas\sampledata.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="areas\serializers.py">
       <SubType>Code</SubType>
     </Compile>
@@ -87,6 +90,15 @@
     <Compile Include="core\admin.py" />
     <Compile Include="core\apps.py" />
     <Compile Include="core\areas.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="sampledata\decorators.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="sampledata\management\commands\sampledata.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="sampledata\management\commands\__init__.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="core\migrations\__init__.py" />
@@ -119,10 +131,17 @@
     <Compile Include="production.dist.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="sampledata\apps.py" />
+    <Compile Include="sampledata\migrations\__init__.py" />
+    <Compile Include="sampledata\tests.py" />
+    <Compile Include="sampledata\__init__.py" />
     <Compile Include="users\admin.py" />
     <Compile Include="users\apps.py" />
     <Compile Include="users\migrations\__init__.py" />
     <Compile Include="users\models.py" />
+    <Compile Include="users\sampledata.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="users\serializers.py">
       <SubType>Code</SubType>
     </Compile>
@@ -160,7 +179,9 @@
     <Folder Include="choices\migrations\" />
     <Folder Include="choices\templates\" />
     <Folder Include="core\" />
+    <Folder Include="sampledata\management\commands\" />
     <Folder Include="core\migrations\" />
+    <Folder Include="sampledata\management\" />
     <Folder Include="flags\" />
     <Folder Include="flags\" />
     <Folder Include="flags\migrations\" />
@@ -169,6 +190,8 @@
     <Folder Include="flags\templates\admin\" />
     <Folder Include="flags\templates\admin\flags\" />
     <Folder Include="flags\templates\admin\flags\flag\" />
+    <Folder Include="sampledata\" />
+    <Folder Include="sampledata\migrations\" />
     <Folder Include="templates\" />
     <Folder Include="templates\rest_framework\" />
     <Folder Include="users\" />
