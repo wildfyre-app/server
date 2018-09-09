@@ -9,6 +9,7 @@ from PIL import Image
 
 from django.contrib.auth import get_user_model
 
+from . import get_postid
 from .registry import registry
 from .views import *
 from .models import *
@@ -231,7 +232,7 @@ class DraftTest(APITestCase):
         Try to get Draft Detail page of own draft
         """
         self.client.force_authenticate(user=self.user_author)
-        response = self.client.get(reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+        response = self.client.get(reverse('areas:draft-detail', kwargs={'area': self.area, 'post': get_postid(self.post)}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -241,7 +242,7 @@ class DraftTest(APITestCase):
         This should fail with a 404.
         """
         self.client.force_authenticate(user=self.user_author)
-        response = self.client.get(reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+        response = self.client.get(reverse('areas:detail', kwargs={'area': self.area, 'post': get_postid(self.post)}))
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -252,7 +253,7 @@ class DraftTest(APITestCase):
         newText = "Modified this draft"
         self.client.force_authenticate(user=self.user_author)
         response = self.client.patch(
-            reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            reverse('areas:draft-detail', kwargs={'area': self.area, 'post': get_postid(self.post)}),
             {'text': newText})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -268,7 +269,7 @@ class DraftTest(APITestCase):
         """
         self.client.force_authenticate(user=self.user_author)
         response = self.client.patch(
-            reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            reverse('areas:draft-detail', kwargs={'area': self.area, 'post': get_postid(self.post)}),
             {'image': None}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -283,7 +284,7 @@ class DraftTest(APITestCase):
         Drafts should be deletable
         """
         self.client.force_authenticate(user=self.user_author)
-        response = self.client.delete(reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+        response = self.client.delete(reverse('areas:draft-detail', kwargs={'area': self.area, 'post': get_postid(self.post)}))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(self.postModel.all_objects.filter(pk=self.post.pk).exists())
@@ -295,7 +296,7 @@ class DraftTest(APITestCase):
         beforeRequest = timezone.now()
 
         self.client.force_authenticate(user=self.user_author)
-        response = self.client.post(reverse('areas:draft-publish', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+        response = self.client.post(reverse('areas:draft-publish', kwargs={'area': self.area, 'post': get_postid(self.post)}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -325,7 +326,7 @@ class AdditionalImagesTest(APITestCase):
         """
         Get the uri of the image n
         """
-        return reverse('areas:draft-img', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'img': n})
+        return reverse('areas:draft-img', kwargs={'area': self.area, 'post': get_postid(self.post), 'img': n})
 
     def create_image(self):
         img = BytesIO()
@@ -407,7 +408,7 @@ class AdditionalImagesTest(APITestCase):
         self.post.additional_images.all().delete()
         self.client.put(self.get_img_url(0), {'image': self.create_image()})
 
-        response = self.client.get(reverse('areas:draft-detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+        response = self.client.get(reverse('areas:draft-detail', kwargs={'area': self.area, 'post': get_postid(self.post)}))
 
         images = response.data['additional_images']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -445,7 +446,7 @@ class DetailTest(APITestCase):
         """
         response = self.client.get(reverse(
             'areas:detail',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -460,7 +461,7 @@ class DetailTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(reverse(
             'areas:detail',
-            kwargs={'area': self.area, 'pk': self.anonym_post.pk, 'nonce': self.anonym_post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.anonym_post)}
             ))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -482,7 +483,7 @@ class DetailTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(reverse(
             'areas:detail',
-            kwargs={'area': self.area, 'pk': post.pk, 'nonce': post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(post)}
             ))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -496,7 +497,7 @@ class DetailTest(APITestCase):
         self.client.force_authenticate(user=self.user_author)
         response = self.client.delete(reverse(
             'areas:detail',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -508,7 +509,7 @@ class DetailTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.delete(reverse(
             'areas:detail',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -519,7 +520,7 @@ class DetailTest(APITestCase):
         """
         response = self.client.delete(reverse(
             'areas:detail',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ))
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -548,7 +549,7 @@ class CommentTest(APITestCase):
         comment = self.post.comment_set.create(author=self.user_author, text="Hi")
 
         response = self.client.get(
-            reverse('areas:comment', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'comment': comment.pk}))
+            reverse('areas:comment', kwargs={'area': self.area, 'post': get_postid(self.post), 'comment': comment.pk}))
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -557,7 +558,7 @@ class CommentTest(APITestCase):
         Unauthenticated users shouldn't be able to comment
         """
         response = self.client.post(
-            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            reverse('areas:detail', kwargs={'area': self.area, 'post': get_postid(self.post)}),
             {'text': "Hi"})
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -568,7 +569,7 @@ class CommentTest(APITestCase):
         """
         self.client.force_authenticate(user=self.user)
         response = self.client.post(
-            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            reverse('areas:detail', kwargs={'area': self.area, 'post': get_postid(self.post)}),
             {'text': "Hi"})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -587,7 +588,7 @@ class CommentTest(APITestCase):
         img.seek(0)
 
         response = self.client.post(
-            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            reverse('areas:detail', kwargs={'area': self.area, 'post': get_postid(self.post)}),
             {'text': "Hi", 'image': img})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -599,7 +600,7 @@ class CommentTest(APITestCase):
 
         self.client.force_authenticate(user=self.user_author)
         response = self.client.delete(
-            reverse('areas:comment', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'comment': comment.pk}))
+            reverse('areas:comment', kwargs={'area': self.area, 'post': get_postid(self.post), 'comment': comment.pk}))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(self.post.comment_set.count(), 0)
@@ -610,7 +611,7 @@ class CommentTest(APITestCase):
 
         self.client.force_authenticate(user=self.user)
         response = self.client.delete(
-            reverse('areas:comment', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'comment': comment.pk}))
+            reverse('areas:comment', kwargs={'area': self.area, 'post': get_postid(self.post), 'comment': comment.pk}))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(self.post.comment_set.count(), 0)
@@ -621,7 +622,7 @@ class CommentTest(APITestCase):
 
         self.client.force_authenticate(user=self.user)
         response = self.client.delete(
-            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}))
+            reverse('areas:detail', kwargs={'area': self.area, 'post': get_postid(self.post)}))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(self.post.comment_set.count(), 1)
@@ -651,7 +652,7 @@ class SpreadTest(APITestCase):
 
         response = self.client.post(reverse(
             'areas:spread',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ), {'spread': True})
 
         del self.post.stack_outstanding  # Force update
@@ -668,7 +669,7 @@ class SpreadTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(reverse(
             'areas:spread',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ), {'spread': True})
 
         del self.post.stack_outstanding  # Force update
@@ -685,7 +686,7 @@ class SpreadTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(reverse(
             'areas:spread',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ), {'spread': False})
 
         del self.post.stack_outstanding  # Force update
@@ -698,7 +699,7 @@ class SpreadTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(reverse(
             'areas:spread',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ), {'spread': True})
 
         del self.post.stack_outstanding  # Force update
@@ -732,7 +733,7 @@ class NotificationTest(APITestCase):
 
         self.client.force_authenticate(user=self.user)
         self.client.post(
-            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            reverse('areas:detail', kwargs={'area': self.area, 'post': get_postid(self.post)}),
             {'text': text})
 
         return comment_model.objects.get(author=self.user, text=text)
@@ -779,7 +780,7 @@ class NotificationTest(APITestCase):
         """
         response = self.client.post(reverse(
             'areas:subscribe',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ))
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -791,7 +792,7 @@ class NotificationTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.put(reverse(
             'areas:subscribe',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ), {'subscribed': True})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -807,7 +808,7 @@ class NotificationTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.put(reverse(
             'areas:subscribe',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ), {'subscribed': False})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -844,7 +845,7 @@ class NotificationTest(APITestCase):
         self.client.force_authenticate(user=self.user_author)
         self.client.get(reverse(
             'areas:detail',
-            kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}
+            kwargs={'area': self.area, 'post': get_postid(self.post)}
             ))
 
         self.assertFalse(comment in self.user_author.comment_unread.all())
@@ -917,7 +918,7 @@ class FlagTest(APITestCase):
         """
         Unauthenticated users may not falg content
         """
-        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'post': get_postid(self.post)}),
                                     {'reason': Flag.Reason.SPAM.value})
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -927,7 +928,7 @@ class FlagTest(APITestCase):
         Flag a post
         """
         self.client.force_authenticate(user=self.reporter)
-        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'post': get_postid(self.post)}),
                                     {'reason': Flag.Reason.SPAM.value})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -940,7 +941,7 @@ class FlagTest(APITestCase):
         Flag a comment
         """
         self.client.force_authenticate(user=self.reporter)
-        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce, 'comment': self.comment.pk}),
+        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'post': get_postid(self.post), 'comment': self.comment.pk}),
                                     {'reason': Flag.Reason.SPAM.value})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -980,7 +981,7 @@ class EnforceBanTest(APITestCase):
         """
         post = self.postModel.all_objects.create(text="Sample Draft", author=self.user, draft=True)
         
-        response = self.client.post(reverse('areas:draft-publish', kwargs={'area': self.area, 'pk': post.pk, 'nonce': post.nonce}))
+        response = self.client.post(reverse('areas:draft-publish', kwargs={'area': self.area, 'post': get_postid(post)}))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         post = self.postModel.all_objects.get(pk=post.pk)
@@ -1001,7 +1002,7 @@ class EnforceBanTest(APITestCase):
         Test if banning of comments is enforced
         """
         response = self.client.post(
-            reverse('areas:detail', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+            reverse('areas:detail', kwargs={'area': self.area, 'post': get_postid(self.post)}),
             {'text': "Hi"})
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -1010,7 +1011,7 @@ class EnforceBanTest(APITestCase):
         """
         Test if banning of flaggin is enforced
         """
-        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'pk': self.post.pk, 'nonce': self.post.nonce}),
+        response = self.client.post(reverse('areas:flag', kwargs={'area': self.area, 'post': get_postid(self.post)}),
                                     {'reason': Flag.Reason.SPAM.value})
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

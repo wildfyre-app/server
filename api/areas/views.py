@@ -1,3 +1,5 @@
+import math
+
 from rest_framework import generics, mixins, permissions, status
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
@@ -32,16 +34,28 @@ class PostSerializerMixin(AreaMixin):
 
 
 class PostObjectMixin(PostSerializerMixin):
-    post_pk_field = 'pk'
-    post_nonce_field = 'nonce'
+    post_field = 'post'
 
     def get_post_queryset(self):
         return self.area.Post().objects.all()
 
     def get_post(self, check_permissions=True):
         queryset = self.filter_queryset(self.get_queryset())
-        pk = self.kwargs.get(self.post_pk_field)
-        nonce = self.kwargs.get(self.post_nonce_field)
+        post_id = self.kwargs[self.post_field]
+
+        if post_id is 0:
+            # We would get an math domain error with the next calculation when removing this.
+            raise Http404()
+
+        # We need a number that we can use to calculate the nonce and the pk from their combined value `(?<nonce>[1-9][0-9]{7})(?<pk>[1-9][0-9]*)`.
+        # To do this we need 10 to the power of the number of digits of pk.
+        operand = 10 ** (math.floor(math.log10(post_id)) + 1 - 8)  # `math.floor(math.log10(post_id)) + 1`: number of digits in post_id
+        nonce = post_id // operand
+        pk = post_id % operand
+
+        if pk < 0:
+            # We won't find a post for this, so no need to hit the database.
+            raise Http404()
 
         obj = get_object_or_404(queryset, pk=pk, nonce=nonce)
         if check_permissions:
@@ -50,14 +64,14 @@ class PostObjectMixin(PostSerializerMixin):
 
 
 class CommentObjectMixin(PostObjectMixin):
-    comment_pk_field = 'comment'
+    comment_field = 'comment'
 
     def get_comment_serializer_class(self):
         return self.area.comment_serializer
 
     def get_comment(self, check_permissions=True):
         post = self.get_post(check_permissions=False)
-        comment = self.kwargs.get('comment')
+        comment = self.kwargs.get(self.comment_field)
 
         obj = get_object_or_404(post.comment_set.all(), pk=comment)
 
@@ -330,7 +344,7 @@ class PublishDraftView(generics.GenericAPIView, DraftPostObjectMixin):
     def get_object(self):
         return self.get_post()
 
-    def post(self, request, area, pk, nonce):
+    def post(self, request, area, post):
         obj = self.get_object()
         obj.publish()
         obj.save()
