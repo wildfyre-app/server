@@ -27,9 +27,24 @@ with the required data.
 Other Users Profile
 ===================
 
-To view the profile of anaother user make a GET request to `/users/<id>`,
+To view the profile of another user make a GET request to `/users/<id>`,
 where `<id>` is the users unique id.
 Which you can get from his posts or comments.
 
 You can't edit the profile of another user.
 Even when you access your own profile using the id, you can't edit it.
+
+
+
+Fetch multiple profiles at once
+-------------------------------
+
+To get multiple profiles at once make a GET request to `/users/get/`
+and specify each id of a target users as query parameter `id`.
+
+e.g. `/users/get/?id=1&id=2&id=4`, will get the profiles of the user 1, 2 and 4.
+
+.. note::
+    If there is no user for a given id
+    (because the user was recently deleted, etc) no error is raised, and the list
+    will just not contain an entry for that user.
