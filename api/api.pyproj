@@ -55,11 +55,9 @@
     <Compile Include="areas\apps.py" />
     <Compile Include="areas\migrations\__init__.py" />
     <Compile Include="areas\models.py" />
-    <Compile Include="areas\options.py" />
     <Compile Include="areas\permissions.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="areas\registry.py" />
     <Compile Include="areas\sampledata.py">
       <SubType>Code</SubType>
     </Compile>
@@ -89,9 +87,6 @@
     <Compile Include="choices\__init__.py" />
     <Compile Include="core\admin.py" />
     <Compile Include="core\apps.py" />
-    <Compile Include="core\areas.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="sampledata\decorators.py">
       <SubType>Code</SubType>
     </Compile>

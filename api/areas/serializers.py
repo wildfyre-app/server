@@ -1,13 +1,15 @@
 from rest_framework import serializers
 
-from .models import Post, PostImage, Comment, Reputation
+from .models import Area, Post, PostImage, Comment, Reputation
 from users.serializers import ProfileSerializer
 
 from core.validators import FileSizeValidator
 
 
-class AreaSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=50)
+class AreaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Area
+        fields = ('name', 'displayname')
 
 
 class PostImageSerializer(serializers.ModelSerializer):
@@ -60,14 +62,14 @@ class PostSerializer(MinimalPostSerializer):
 
 
 class MinimalPostAreaSerializer(MinimalPostSerializer):
-    area = serializers.ReadOnlyField()
+    area = serializers.ReadOnlyField(source='area.name')
 
     class Meta(MinimalPostSerializer.Meta):
         fields = ('area',) + MinimalPostSerializer.Meta.fields
 
 
 class NotificationSerializer(serializers.Serializer):
-    area = serializers.ReadOnlyField(source='post.area')
+    area = serializers.ReadOnlyField()
     post = MinimalPostSerializer(read_only=True)
 
     comments = serializers.ListField(child=serializers.IntegerField())

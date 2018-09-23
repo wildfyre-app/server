@@ -11,8 +11,8 @@ from django.db.models import F
 from bans.permissions import MayPost, MayComment, MayFlagPost, MayFlagComment
 
 from . import serializers
+from .models import Area, Post, Reputation
 from .permissions import IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack
-from .registry import registry
 
 from flags.serializers import FlagSerializer
 
@@ -23,21 +23,20 @@ class AreaMixin():
     @property
     def area(self):
         if self._area is None:
-            self._area = registry.get_area(self.kwargs.get('area'))
-
+            self._area = get_object_or_404(Area.objects.all(), name=self.kwargs.get('area'))
         return self._area
 
 
 class PostSerializerMixin(AreaMixin):
     def get_post_serializer_class(self):
-        return self.area.post_serializer
+        return serializers.PostSerializer
 
 
 class PostObjectMixin(PostSerializerMixin):
     post_field = 'post'
 
     def get_post_queryset(self):
-        return self.area.Post().objects.all()
+        return Post.objects.filter(area=self.area)
 
     def get_post(self, check_permissions=True):
         queryset = self.filter_queryset(self.get_queryset())
@@ -67,7 +66,7 @@ class CommentObjectMixin(PostObjectMixin):
     comment_field = 'comment'
 
     def get_comment_serializer_class(self):
-        return self.area.comment_serializer
+        return serializers.CommentSerializer
 
     def get_comment(self, check_permissions=True):
         post = self.get_post(check_permissions=False)
@@ -82,11 +81,9 @@ class CommentObjectMixin(PostObjectMixin):
 
 # region
 class AreaView(generics.ListAPIView):
+    queryset = Area.objects.all()
     serializer_class = serializers.AreaSerializer
     pagination_class = None
-
-    def get_queryset(self):
-        return registry.areas.values()
 
 
 class QueueView(generics.ListCreateAPIView, PostSerializerMixin):
@@ -99,10 +96,10 @@ class QueueView(generics.ListCreateAPIView, PostSerializerMixin):
         return self.get_post_serializer_class()
 
     def get_queryset(self):
-        return self.area.Post().get_stack(self.area, self.request.user)
+        return Post.get_stack(self.area, self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, area=self.area.name)
+        serializer.save(author=self.request.user, area=self.area)
 
 
 class OwnView(generics.ListAPIView, PostSerializerMixin):
@@ -115,7 +112,7 @@ class OwnView(generics.ListAPIView, PostSerializerMixin):
         return self.get_post_serializer_class()
 
     def get_queryset(self):
-        return self.area.Post().objects.filter(author=self.request.user).order_by('-created')
+        return Post.objects.filter(area=self.area, author=self.request.user).order_by('-created')
 
 
 class DetailView(generics.RetrieveDestroyAPIView, mixins.CreateModelMixin, CommentObjectMixin):  # PostObjectMixin included in CommentObjectMixin
@@ -135,7 +132,8 @@ class DetailView(generics.RetrieveDestroyAPIView, mixins.CreateModelMixin, Comme
 
     def get(self, request, *args, **kwargs):
         if self.request.user.is_authenticated:
-            self.area.mark_read(self.request.user, self.get_object())
+            user = self.request.user
+            user.comment_unread.remove(*user.comment_unread.filter(post=self.get_object()))
         return super().get(request, *args, **kwargs)
 
     def get_object(self):
@@ -152,13 +150,11 @@ class CommentView(generics.RetrieveDestroyAPIView, CommentObjectMixin):
     """
     View a comment of a post
     """
+    serializer_class = serializers.CommentSerializer
     permission_classes = (IsOwnerOrReadOnly,)
 
-    def get_serializer_class(self):
-        return self.area.comment_serializer
-
     def get_queryset(self):
-        return self.area.Post().objects.all()
+        return Post.objects.filter(area=self.area)
 
     def get_object(self):
         return self.get_comment()
@@ -185,7 +181,7 @@ class SpreadView(generics.CreateAPIView, PostObjectMixin):
 
         # Handle Spread
         if serializer.validated_data.get('spread'):
-            obj.stack_outstanding = F('stack_outstanding') + obj.get_spread(self.area.name, self.request.user)
+            obj.stack_outstanding = F('stack_outstanding') + obj.get_spread(self.area, self.request.user)
 
         # Remove from stack
         obj.stack_done.add(self.request.user)
@@ -206,7 +202,7 @@ class NotificationView(generics.ListAPIView):
         for comment in self.request.user.comment_unread.all():
             if notifications.get(comment.post, None) is None:
                 notifications[comment.post] = {
-                    'area': comment.post.area,
+                    'area': comment.post.area.name,
                     'post': comment.post,
 
                     'comments': [],
@@ -230,7 +226,7 @@ class SubscribedView(generics.ListAPIView, PostSerializerMixin):
         return self.get_post_serializer_class()
 
     def get_queryset(self):
-        return self.request.user.post_subscriber.filter(area=self.area.name).order_by('-created')
+        return self.request.user.post_subscriber.filter(area=self.area).order_by('-created')
 
 
 class SubscribeView(generics.RetrieveUpdateAPIView, PostObjectMixin):
@@ -266,7 +262,7 @@ class SubscribeView(generics.RetrieveUpdateAPIView, PostObjectMixin):
 # region Drafts
 class DraftPostObjectMixin(PostObjectMixin):
     def get_draft_post_queryset(self):
-        return self.area.Post().all_objects.filter(author=self.request.user, draft=True)
+        return Post.all_objects.filter(area=self.area, author=self.request.user, draft=True)
 
     def get_post_queryset(self):
         return self.get_draft_post_queryset()
@@ -283,7 +279,7 @@ class DraftListView(OwnView, mixins.CreateModelMixin, DraftPostObjectMixin):
         return self.create(request)
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, area=self.area.name, draft=True)
+        serializer.save(author=self.request.user, area=self.area, draft=True)
 
 
 class DraftDetailView(DetailView, mixins.UpdateModelMixin, DraftPostObjectMixin):
@@ -354,13 +350,11 @@ class PublishDraftView(generics.GenericAPIView, DraftPostObjectMixin):
 
 # region Reputation
 class ReputationView(generics.RetrieveAPIView, AreaMixin):
+    serializer_class = serializers.ReputationSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get_serializer_class(self):
-        return self.area.rep_serializer
-
     def get_object(self):
-        obj, _ = self.area.rep_model.objects.get_or_create(area=self.area.name, user=self.request.user)
+        obj, _ = Reputation.objects.get_or_create(area=self.area, user=self.request.user)
 
         self.check_object_permissions(self.request, obj)
         return obj
@@ -394,7 +388,7 @@ class FlagCommentView(generics.CreateAPIView, CommentObjectMixin):
     permission_classes = (permissions.IsAuthenticated, MayFlagComment)
 
     def get_queryset(self):
-        return self.area.Post().objects.all()
+        return Post.objects.filter(area=self.area)
 
     def get_object(self):
         return self.get_comment()

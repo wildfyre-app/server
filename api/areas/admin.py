@@ -43,7 +43,6 @@ class PostDraftFilter(admin.filters.SimpleListFilter):
             }
 
     def queryset(self, request, queryset):
-        print(self.value())
         if self.value() is None or self.value() == '1':
             return queryset.filter(draft=bool(self.value()))
         if self.value() == 'all':
@@ -52,13 +51,13 @@ class PostDraftFilter(admin.filters.SimpleListFilter):
         raise IncorrectLookupParameters()
 
 
+@admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    fields = ('active', 'author', 'anonym', 'text', 'image',)
-    list_display = ('get_uri_key', 'author', 'anonym', 'text', 'stack_outstanding', 'active',)
-    list_display = ('get_uri_key', 'author', 'anonym', 'draft', 'text', 'stack_outstanding', 'active',)
+    fields = ('active', 'area', 'author', 'anonym', 'text', 'image',)
+    list_display = ('get_uri_key', 'area', 'author', 'anonym', 'draft', 'text', 'stack_outstanding', 'active',)
     inlines = [PostImageInline, CommentInline, ]
 
-    list_filter = ['anonym', 'created', PostDraftFilter, ]
+    list_filter = ['area', 'anonym', 'created', PostDraftFilter, ]
 
     def get_queryset(self, request):
         qs = self.model.all_objects.get_queryset()

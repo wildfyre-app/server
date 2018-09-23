@@ -10,16 +10,27 @@ from PIL import Image
 from django.contrib.auth import get_user_model
 
 from . import get_postid
-from .registry import registry
 from .views import *
 from .models import *
 from bans.models import Ban
 from flags.models import Flag, FlagComment
 
 
+def create_areas():
+    """
+    Create multiple areas and return one of them
+    """
+    Area.objects.create(name='example2', displayname="2nd Example Area")
+    Area.objects.create(name='somethingspecial', displayname="Something Special")
+    Area.objects.create(name='dispnameunrelated', displayname="The cake is a lie.")
+
+    return Area.objects.create(name='example', displayname="Example Area")
+
+
 class AreasTest(APITestCase):
     def setUp(self):
-        self.areas = registry.areas
+        create_areas()
+        self.areas = Area.objects.all()
 
     def test_areas(self):
         """
@@ -29,7 +40,7 @@ class AreasTest(APITestCase):
         """
         area_names = []
         for area in self.areas.values():
-            area_names.append({'name': area.name})
+            area_names.append({'name': area['name'], 'displayname': area['displayname']})
 
         response = self.client.get(reverse('areas:areas'))
 
@@ -37,11 +48,9 @@ class AreasTest(APITestCase):
         self.assertEqual(response.data, area_names)
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class QueueTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -74,9 +83,9 @@ class QueueTest(APITestCase):
 
         # Create posts
         posts = []
-        posts.append(registry.get_area(self.area).Post().objects.create(author=self.author))
-        posts.append(registry.get_area(self.area).Post().objects.create(author=self.author))
-        posts.append(registry.get_area(self.area).Post().objects.create(author=self.author))
+        posts.append(Post.objects.create(area=self.area, author=self.author))
+        posts.append(Post.objects.create(area=self.area, author=self.author))
+        posts.append(Post.objects.create(area=self.area, author=self.author))
 
         init_stack = posts[0].stack_outstanding
 
@@ -107,22 +116,20 @@ class QueueTest(APITestCase):
         Create a new post
         """
         # Delete Create Object
-        for p in registry.get_area(self.area).Post().objects.all():
-            p.delete()
+        Post.objects.all().delete()
 
         self.client.force_authenticate(user=self.user)
         response = self.client.post(reverse('areas:queue', kwargs={'area': self.area}), {'text': "Hi"})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(registry.get_area(self.area).Post().objects.count(), 1)
+        self.assertEqual(Post.objects.filter(area=self.area).count(), 1)
 
     def test_create_with_image(self):
         """
         Create a new post, that contains a head image
         """
         # Delete Create Object
-        for p in registry.get_area(self.area).Post().objects.all():
-            p.delete()
+        Post.objects.all().delete()
 
         self.client.force_authenticate(user=self.user)
 
@@ -135,14 +142,12 @@ class QueueTest(APITestCase):
         response = self.client.post(reverse('areas:queue', kwargs={'area': self.area}), {'text': "Hi", 'image': img})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(registry.get_area(self.area).Post().objects.count(), 1)
+        self.assertEqual(Post.objects.filter(area=self.area).count(), 1)
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class OwnTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -151,8 +156,7 @@ class OwnTest(APITestCase):
             username='author', password='secret')
 
         # Test Posts
-        postModel = registry.get_area(self.area).Post()
-        self.post = postModel.objects.create(author=self.user_author, text="Hi there")
+        self.post = Post.objects.create(area=self.area, author=self.user_author, text="Hi there")
 
     def test_not_authenticated(self):
         """
@@ -183,11 +187,9 @@ class OwnTest(APITestCase):
         self.assertEqual(len(response.data['results']), 0)
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class DraftTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -196,8 +198,7 @@ class DraftTest(APITestCase):
             username='author', password='secret')
 
         # Test Posts
-        self.postModel = registry.get_area(self.area).Post()
-        self.post = self.postModel.objects.create(author=self.user_author, text="Hi there", draft=True)
+        self.post = Post.objects.create(area=self.area, author=self.user_author, text="Hi there", draft=True)
 
     def test_not_authenticated(self):
         """
@@ -259,7 +260,7 @@ class DraftTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Refresh object form db (can't just use del, because default manager doesn't find drafts)
-        post = self.postModel.all_objects.get(pk=self.post.pk)
+        post = Post.all_objects.get(pk=self.post.pk)
         self.assertEqual(post.text, newText)
         self.assertTrue(post.draft)  # Must still be a draft
 
@@ -275,7 +276,7 @@ class DraftTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Refresh object form db (can't just use del, because default manager doesn't find drafts)
-        post = self.postModel.all_objects.get(pk=self.post.pk)
+        post = Post.all_objects.get(pk=self.post.pk)
         self.assertFalse(bool(post.image))
         self.assertTrue(post.draft)  # Must still be a draft
 
@@ -287,7 +288,7 @@ class DraftTest(APITestCase):
         response = self.client.delete(reverse('areas:draft-detail', kwargs={'area': self.area, 'post': get_postid(self.post)}))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(self.postModel.all_objects.filter(pk=self.post.pk).exists())
+        self.assertFalse(Post.all_objects.filter(pk=self.post.pk).exists())
 
     def test_publish_draft(self):
         """
@@ -301,26 +302,24 @@ class DraftTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Refresh object form db
-        post = self.postModel.objects.get(pk=self.post.pk)  # Should be available in objects manager now
+        post = Post.objects.get(pk=self.post.pk)  # Should be available in objects manager now
         self.assertFalse(post.draft)
         self.assertGreater(post.created, beforeRequest)
         self.assertTrue(post.active)
         self.assertEqual(post.stack_outstanding, self.user_author.reputation_set.get(area=self.area).spread)
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class AdditionalImagesTest(APITestCase):
     def setUp(self):
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
 
         # Everything authenticated
         self.client.force_authenticate(user=self.user)
 
-        self.postModel = registry.get_area(self.area).Post()
         # Post must be a draft
-        self.post = self.postModel.all_objects.create(author=self.user, text="Hi there", draft=True)
+        self.post = Post.all_objects.create(area=self.area, author=self.user, text="Hi there", draft=True)
 
     def get_img_url(self, n):
         """
@@ -336,7 +335,7 @@ class AdditionalImagesTest(APITestCase):
         return img
 
     def refresh_post(self):
-        self.post = self.postModel.all_objects.get(pk=self.post.pk)
+        self.post = Post.all_objects.get(pk=self.post.pk)
         return self.post
 
     def test_add_img(self):
@@ -423,11 +422,9 @@ class AdditionalImagesTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class DetailTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -436,9 +433,8 @@ class DetailTest(APITestCase):
             username='author', password='secret')
 
         # Test Posts
-        postModel = registry.get_area(self.area).Post()
-        self.post = postModel.objects.create(author=self.user_author, text="Hi there")
-        self.anonym_post = postModel.objects.create(author=self.user_author, text="Hi there", anonym=True)
+        self.post = Post.objects.create(area=self.area, author=self.user_author, text="Hi there")
+        self.anonym_post = Post.objects.create(area=self.area, author=self.user_author, text="Hi there", anonym=True)
 
     def test_view_post(self):
         """
@@ -475,8 +471,7 @@ class DetailTest(APITestCase):
         deleted_user = get_user_model().objects.create_user(
             username='DELETE ME', password='secret')
 
-        postModel = registry.get_area(self.area).Post()
-        post = postModel.objects.create(author=deleted_user, text="Hi there")
+        post = Post.objects.create(area=self.area, author=deleted_user, text="Hi there")
 
         deleted_user.delete();
 
@@ -526,11 +521,9 @@ class DetailTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class CommentTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -539,8 +532,7 @@ class CommentTest(APITestCase):
             username='author', password='secret')
 
         # Test Posts
-        postModel = registry.get_area(self.area).Post()
-        self.post = postModel.objects.create(author=self.user_author, text="Hi there")
+        self.post = Post.objects.create(area=self.area, author=self.user_author, text="Hi there")
 
     def test_view_comment(self):
         """
@@ -628,11 +620,9 @@ class CommentTest(APITestCase):
         self.assertEqual(self.post.comment_set.count(), 1)
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class SpreadTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -641,8 +631,7 @@ class SpreadTest(APITestCase):
             username='author', password='secret')
 
         # Test Posts
-        postModel = registry.get_area(self.area).Post()
-        self.post = postModel.objects.create(author=self.user_author, text="Hi there")
+        self.post = Post.objects.create(area=self.area, author=self.user_author, text="Hi there")
 
     def test_not_authenticated(self):
         """
@@ -707,11 +696,9 @@ class SpreadTest(APITestCase):
         self.assertEqual(self.post.stack_outstanding, init_stack)
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class NotificationTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -720,15 +707,13 @@ class NotificationTest(APITestCase):
             username='author', password='secret')
 
         # Test Posts
-        postModel = registry.get_area(self.area).Post()
-        self.post = postModel.objects.create(author=self.user_author, text="Hi there")
+        self.post = Post.objects.create(area=self.area, author=self.user_author, text="Hi there")
 
     def post_comment(self):
-        comment_model = registry.get_area(self.area).comment_model
         # Ensure unique text (yes this is a do while)
         while True:
             text = "NotificationTest.post_comment_" + str(randint(0, 10**10))
-            if not comment_model.objects.filter(text=text).exists():
+            if not Comment.objects.filter(text=text).exists():
                 break
 
         self.client.force_authenticate(user=self.user)
@@ -736,7 +721,7 @@ class NotificationTest(APITestCase):
             reverse('areas:detail', kwargs={'area': self.area, 'post': get_postid(self.post)}),
             {'text': text})
 
-        return comment_model.objects.get(author=self.user, text=text)
+        return Comment.objects.get(author=self.user, text=text)
 
     def test_notification_not_authenticated(self):
         """
@@ -871,11 +856,9 @@ class NotificationTest(APITestCase):
         self.assertEqual(len(response.data['results']), self.user.post_subscriber.count())
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class ReputationTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -899,11 +882,9 @@ class ReputationTest(APITestCase):
         self.assertTrue(Reputation.objects.filter(area=self.area, user=self.user).exists())
 
 
-@unittest.skipUnless(registry.areas, "No areas defined")
 class FlagTest(APITestCase):
     def setUp(self):
-        # Area to test with, use first area
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
         # Test User
         self.author = get_user_model().objects.create_user(
             username='author', password='secret')
@@ -952,7 +933,7 @@ class FlagTest(APITestCase):
 
 class EnforceBanTest(APITestCase):
     def setUp(self):
-        self.area = list(registry.areas)[0]
+        self.area = create_areas()
 
         self.user = get_user_model().objects.create_user(
             username='user', password='secret')
@@ -961,8 +942,7 @@ class EnforceBanTest(APITestCase):
         goodguy = get_user_model().objects.create_user(
             username='goodguy', password='secret')
 
-        self.postModel = registry.get_area(self.area).Post()
-        self.post = self.postModel.objects.create(text="Sample Post", author=goodguy)
+        self.post = Post.objects.create(area=self.area, text="Sample Post", author=goodguy)
 
         # All requests should be authenticated as the banned user
         self.client.force_authenticate(user=self.user)
@@ -979,12 +959,12 @@ class EnforceBanTest(APITestCase):
         """
         Test if banning of posting is enforced for drafts
         """
-        post = self.postModel.all_objects.create(text="Sample Draft", author=self.user, draft=True)
+        post = Post.all_objects.create(area=self.area, text="Sample Draft", author=self.user, draft=True)
         
         response = self.client.post(reverse('areas:draft-publish', kwargs={'area': self.area, 'post': get_postid(post)}))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        post = self.postModel.all_objects.get(pk=post.pk)
+        post = Post.all_objects.get(pk=post.pk)
         self.assertTrue(post.draft)
 
     def test_ban_allow_draft(self):
@@ -994,7 +974,7 @@ class EnforceBanTest(APITestCase):
         response = self.client.post(reverse('areas:drafts', kwargs={'area': self.area}), {'text': 'Hello World'})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        post = self.postModel.all_objects.get(author=self.user)
+        post = Post.all_objects.get(area=self.area, author=self.user)
         self.assertTrue(post.draft)  # Must be a draft
 
     def test_ban_comment(self):

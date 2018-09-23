@@ -7,11 +7,17 @@ from django.db import models
 from django.db.models import F
 from django.utils import timezone
 
-from .registry import registry
-
 
 def image_path(instance, filename):
     return 'images/%u%s' % (uuid.uuid4(), os.path.splitext(filename)[1])
+
+
+class Area(models.Model):
+    name = models.CharField(max_length=30, unique=True, db_index=True)
+    displayname = models.CharField(max_length=30, unique=True)
+
+    def __str__(self):
+        return self.name
 
 
 class PostManager(models.Manager):
@@ -25,7 +31,7 @@ class Post(models.Model):
         # Will never start with 0
         return randint(10**7, 10**8-1)
 
-    area = models.CharField(max_length=30, db_index=True)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False)  # Might be null, but must only when user gets deleted
     anonym = models.BooleanField(default=False)
     nonce = models.IntegerField(default=generate_nonce)  # To prevent malicious users from trying pk's
@@ -54,8 +60,6 @@ class Post(models.Model):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         new = self.pk is None
 
-        if self.area not in registry.areas:
-            raise ValueError("'%s' is not a valid Area" % self.area)
         if new and not self.draft:
             self.activate()
         super().save(force_insert, force_update, using, update_fields)
@@ -94,11 +98,13 @@ class Post(models.Model):
         """
         Fills up the stack of the user and returns it
         """
-        stack = cls.objects.filter(area=area.name, stack_assigned__pk=user.pk)
+        MAX_USER_STACK = 10
 
-        missing = area.max_user_stack - stack.count()
+        stack = cls.objects.filter(area=area, stack_assigned__pk=user.pk)
+
+        missing = MAX_USER_STACK - stack.count()
         if missing > 0:
-            available = cls.objects.filter(active=True, area=area.name, stack_outstanding__gt=0)
+            available = cls.objects.filter(active=True, area=area, stack_outstanding__gt=0)
             available = available.exclude(pk__in=stack.values('pk'))  # Exclude allready assined
             available = available.exclude(pk__in=cls.objects.filter(stack_done__pk=user.pk))  # Exclude already done
 
@@ -121,7 +127,7 @@ class Post(models.Model):
 
     @staticmethod
     def get_spread(area, user):
-        return registry.get_area(area).rep_model.get_spread(area, user).spread
+        return Reputation.get_spread(area, user).spread
 
     # Short description for admin
     get_uri_key.short_description = 'id'
@@ -168,7 +174,7 @@ class Comment(models.Model):
 
 
 class Reputation(models.Model):
-    area = models.CharField(max_length=30, db_index=True)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     reputation = models.IntegerField(default=0)
 
@@ -177,12 +183,13 @@ class Reputation(models.Model):
 
     @property
     def spread(self):
+        SPREAD_MIN = 4
+
         # Calculate Spread amount:
         # (3rd root of 3*rep) + 3
         spread = int((3 * self.reputation) ** (1 / 3) + 3)
-        min = registry.get_area(self.area).spread_min
-        if spread < min:
-            spread = min
+        if spread < SPREAD_MIN:
+            spread = SPREAD_MIN
         return spread
 
     @classmethod
