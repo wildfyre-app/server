@@ -1,7 +1,7 @@
-Django[argon2]==2.0.1
-django-cors-headers==2.1.0
-djangorestframework==3.7.7
-olefile==0.44
-Pillow==4.3.0
-psycopg2==2.7.3.2
-requests==2.18.4
+django[argon2]==2.1.5
+django-cors-headers==2.4.0
+djangorestframework==3.9.0
+olefile==0.46
+pillow==5.4.0
+psycopg2-binary==2.7.6.1
+requests==2.21.0

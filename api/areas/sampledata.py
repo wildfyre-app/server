@@ -12,8 +12,8 @@ from .models import Area, Post
 
 area = Area.objects.create(name='sample', displayname="Sample")
 
-admin = get_user_model().objects.get(pk=1)
-user = get_user_model().objects.get(pk=2)
+admin = get_user_model().objects.filter(is_superuser=True)[0]
+user = get_user_model().objects.filter(is_staff=False)[0]
 
 
 def create_image():

@@ -131,7 +131,7 @@ class RegisterTest(APITestCase):
             reverse('account:register'), {
                 'username': "testUser",
                 'email': "testUser@example.invalid",
-                'password': "password123",
+                'password': "password$123",
                 'captcha': "captchaResult"  # Captcha checks never fail with test secret
             })
 

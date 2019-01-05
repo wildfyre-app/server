@@ -16,9 +16,9 @@ class Command(BaseCommand):
             raise CommandError("sampledata command will not run in production to prevent accidents.")
 
         try:
-            get_user_model().objects.create_superuser('admin', 'admin@example.invalid', 'password123')
-            get_user_model().objects.create_user('user', 'user@example.invalid', 'password123')
-            get_user_model().objects.create_user('another-user', 'another-user@example.invalid', 'password123')
+            get_user_model().objects.create_superuser('admin', 'admin@example.invalid', 'password$123')
+            get_user_model().objects.create_user('user', 'user@example.invalid', 'password$123')
+            get_user_model().objects.create_user('another-user', 'another-user@example.invalid', 'password$123')
 
             autodiscover_modules('sampledata', register_to=sampledata)
             for func in sampledata.functions:
