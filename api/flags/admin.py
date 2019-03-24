@@ -1,15 +1,9 @@
-from django import forms
-from django.conf.urls import url
 from django.contrib import admin
-from django.core.exceptions import PermissionDenied
-from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.encoding import force_text
 from django.utils.html import format_html
-from django.contrib.admin.options import csrf_protect_m, IS_POPUP_VAR
 
 from .models import Flag, FlagComment
-from bans.models import Ban
 
 
 class FlagCommentInline(admin.TabularInline):

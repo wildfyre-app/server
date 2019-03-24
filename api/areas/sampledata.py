@@ -55,7 +55,7 @@ def otherAnonPost():
 
 @register()
 def selfDraft():
-    post = Post.objects.create(area=area, author=admin, text="Example draft", draft=True)
+    Post.objects.create(area=area, author=admin, text="Example draft", draft=True)
 
 
 @register()
@@ -63,4 +63,4 @@ def secoundArea():
     area2 = Area.objects.create(name='secoundarea', displayname="2nd Area")
 
     # A post
-    Post.objects.create(area=area, author=user, text="Post in 2nd Area")
+    Post.objects.create(area=area2, author=user, text="Post in 2nd Area")

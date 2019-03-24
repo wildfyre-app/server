@@ -42,7 +42,7 @@ class PostObjectMixin(PostSerializerMixin):
         queryset = self.filter_queryset(self.get_queryset())
         post_id = self.kwargs[self.post_field]
 
-        if post_id is 0:
+        if post_id == 0:
             # We would get an math domain error with the next calculation when removing this.
             raise Http404()
 

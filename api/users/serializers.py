@@ -17,7 +17,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ('user', 'banned')
 
     def create(self, validated_data):
-        if Profile.objects.filter(user=validated_data.get('user')).count() is not 0:
+        if Profile.objects.filter(user=validated_data.get('user')).count() != 0:
             raise ValidationError('Only one Profile per User allowed', code='unique')
         return super().create(validated_data)
 

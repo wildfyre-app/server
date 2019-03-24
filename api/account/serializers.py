@@ -6,7 +6,6 @@ from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
 from django.core import exceptions
-from django.shortcuts import render
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 
@@ -71,8 +70,8 @@ class ManageAccountSerializer(BaseAccountSerializer):
             # Delete Token
             try:
                 user.auth_token.delete()
-            except:
-                # When no token exists etc
+            except get_user_model().auth_token.RelatedObjectDoesNotExist:
+                # When no token exists
                 pass
 
         email = validated_data.pop('email', None)

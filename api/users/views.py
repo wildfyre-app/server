@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, parsers, exceptions
+from rest_framework import generics, permissions, exceptions
 
 from core.models import User
 

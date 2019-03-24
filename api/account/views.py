@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 from . import serializers
 from .models import ConfirmMail, ResetPassword
@@ -63,8 +64,8 @@ class ResetPasswordView(generics.CreateAPIView):
         # Delete old session
         try:
             resetObj.user.auth_token.delete()
-        except:
-            # When no token exists etc
+        except get_user_model().auth_token.RelatedObjectDoesNotExist:
+            # When no token exists
             pass
 
         resetObj.user.save()

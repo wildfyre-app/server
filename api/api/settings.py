@@ -189,7 +189,7 @@ MEDIA_URL = '/media/'
 
 # Overwrite configuration if on production
 try:
-    from production import *
+    from production import *  # noqa
 
     # Check if Debug set to False
     if DEBUG:

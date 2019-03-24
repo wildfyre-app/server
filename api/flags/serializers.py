@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
 
-from .models import Flag, FlagComment, FLAG_REASON_CHOICES
+from .models import Flag, FLAG_REASON_CHOICES
 
 
 class FlagSerializer(serializers.Serializer):
