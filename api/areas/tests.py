@@ -48,6 +48,81 @@ class AreasTest(APITestCase):
         self.assertEqual(response.data, area_names)
 
 
+class StatusTest(APITestCase):
+    def setUp(self):
+        self.area = create_areas()
+        # Test User
+        self.user = get_user_model().objects.create_user(
+            username='user', password='secret')
+
+    def test_active_true(self):
+        """
+        Create a post. Expect the active flag to be true
+        """
+        p = Post.objects.create(area=self.area, author=self.user, text="Example")
+        # Refresh from db to get annotation
+        p = Post.all_objects.get(pk=p.pk)
+
+        self.assertTrue(p.active)
+
+    def test_active_old(self):
+        """
+        Create a post, set created to be older than one month. Expect the active flag to be false
+        """
+        p = Post.objects.create(area=self.area, author=self.user, text="Example")
+        p.created = timezone.now() - datetime.timedelta(days=40)
+        p.save()
+        # Refresh from db
+        p = Post.all_objects.get(pk=p.pk)
+
+        self.assertFalse(p.active)
+
+
+    def test_active_draft(self):
+        """
+        Create a draft/ Expect the active flag to be false.
+        """
+        p = Post.objects.create(area=self.area, author=self.user, draft=True)
+        # Refresh form db
+        p = Post.all_objects.get(pk=p.pk)
+
+
+        self.assertFalse(p.active)
+
+
+    def test_active_old_draft(self):
+        """
+        Create a draft. Set created to be older than one month. Expect the activ flag to be false.
+        """
+        p = Post.objects.create(area=self.area, author=self.user, draft=True)
+        p.created = timezone.now() - datetime.timedelta(days=40)
+        p.save()
+        # Refresh from db
+        p = Post.all_objects.get(pk=p.pk)
+
+        self.assertFalse(p.active)
+
+
+    def test_active_old_draft_published(self):
+        """
+        Create a draft. Set created to be older than one month. Publish it.
+        Expect the active flag to be true.
+        """
+        p = Post.objects.create(area=self.area, author=self.user, draft=True, created=timezone.now() - datetime.timedelta(days=40))
+        # Refresh from db
+        # And ensure it's actually old enough
+        p = Post.all_objects.get(pk=p.pk)
+        self.assertFalse(p.active)
+        p.publish()
+        p.save()
+        
+        self.assertTrue(p.active)
+        # And refresh again
+        p = Post.all_objects.get(pk=p.pk)
+
+        self.assertTrue(p.active)
+
+
 class QueueTest(APITestCase):
     def setUp(self):
         self.area = create_areas()

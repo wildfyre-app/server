@@ -53,8 +53,8 @@ class PostDraftFilter(admin.filters.SimpleListFilter):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    fields = ('active', 'area', 'author', 'anonym', 'text', 'image',)
-    list_display = ('get_uri_key', 'area', 'author', 'anonym', 'draft', 'text', 'stack_outstanding', 'active',)
+    fields = ('area', 'author', 'anonym', 'text', 'image',)
+    list_display = ('get_uri_key', 'area', 'author', 'anonym', 'draft', 'text', 'stack_outstanding',)
     inlines = [PostImageInline, CommentInline, ]
 
     list_filter = ['area', 'anonym', 'created', PostDraftFilter, ]

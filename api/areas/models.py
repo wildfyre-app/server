@@ -1,10 +1,11 @@
+import datetime
 import os
 import uuid
 from random import randint, sample
 
 from django.conf import settings
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q, Case, When
 from django.utils import timezone
 
 
@@ -20,7 +21,21 @@ class Area(models.Model):
         return self.name
 
 
-class PostManager(models.Manager):
+class PostAllManager(models.Manager):
+    @staticmethod
+    def get_active_annotation():
+        return Case(
+                When(draft=True, then=False),
+                When(Q(created__lt=timezone.now() - datetime.timedelta(days=30)), then=False),
+                default=True,
+                output_field=models.BooleanField(),
+            )
+
+    def get_queryset(self):
+        return super().get_queryset().annotate(active=PostAllManager.get_active_annotation())
+
+
+class PostManager(PostAllManager):
     def get_queryset(self):
         return super().get_queryset().filter(draft=False)
 
@@ -37,7 +52,6 @@ class Post(models.Model):
     nonce = models.IntegerField(default=generate_nonce)  # To prevent malicious users from trying pk's
     created = models.DateTimeField(default=timezone.now)
     draft = models.BooleanField(default=False, db_index=True)
-    active = models.BooleanField(default=False, db_index=True)
     text = models.TextField()
     image = models.ImageField(upload_to=image_path, null=True, blank=True, default=None)
 
@@ -49,7 +63,9 @@ class Post(models.Model):
     subscriber = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='%(class)s_subscriber')
 
     objects = PostManager()
-    all_objects = models.Manager()
+    all_objects = PostAllManager()
+
+    active = None  # Required, so that the serializer finds this field. Will be set through the annotation.
 
     class Meta:
         ordering = ['pk']
@@ -70,8 +86,8 @@ class Post(models.Model):
     def activate(self):
         self.draft = False
         self.created = timezone.now()
-        self.active = True
         self.stack_outstanding = self.get_spread(self.area, self.author)
+        self.active = True  # Post should be active now, so set active to true
 
     def get_uri_key(self):
         """
