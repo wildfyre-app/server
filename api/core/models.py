@@ -1,3 +1,5 @@
+from django.db import models
+
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser, UserManager
 
@@ -9,6 +11,16 @@ class UserManager(UserManager):
 
 
 class User(AbstractUser):
+    username = models.CharField(
+        'username',
+        max_length=150,
+        unique=True,
+        help_text='Required. 150 characters or fewer.',
+        error_messages={
+            'unique': "A user with that username already exists.",
+        },
+    )
+
     objects = UserManager()
 
     def validate_unique(self, exclude=None):
