@@ -58,7 +58,6 @@ class FlagAdmin(admin.ModelAdmin):
     list_filter = [FlagStatusFilter, ]
 
     def url(self, obj):
-        print(obj.content_type.model)
         if obj.content_type.model == "post":
             post = obj.object
         elif obj.content_type.model == "comment":
@@ -68,13 +67,12 @@ class FlagAdmin(admin.ModelAdmin):
 
         return format_html(
             '<a href="{}">Go to Admin Page of Post</a>',
-            reverse('admin:areas_%spost_change' % post.area, args=(post.pk,)))
+            reverse('admin:areas_post_change', args=(post.pk,)))
 
     def has_add_permission(self, request):
         return False
 
     def save_model(self, request, obj, form, change):
-        print(obj.status)
         if "_accept" in request.POST:
             obj.handler = request.user
             obj.status = Flag.Status.ACCEPTED.value
@@ -86,8 +84,4 @@ class FlagAdmin(admin.ModelAdmin):
             obj.status = Flag.Status.REJECTED.value
 
         obj.save()
-        print(obj.status)
-        del obj.status
-        print(obj.status)
-
         return super().save_model(request, obj, form, change)
