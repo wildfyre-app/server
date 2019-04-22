@@ -1,6 +1,7 @@
 import os
 
 from django.db import models
+from django.db.utils import IntegrityError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
@@ -10,6 +11,8 @@ class ProfileQuerySet(models.QuerySet):
         """
         Gets the profile. If it doesn't exist it is created
         """
+        # Use write databse. It's more up to date.
+        self._for_write = True
         try:
             return super().get(*args, **kwargs)
         except self.model.DoesNotExist as e:
@@ -23,7 +26,11 @@ class ProfileQuerySet(models.QuerySet):
                         user = get_user_model().objects.get(pk=user)
                     except get_user_model().DoesNotExist:
                         raise e
-                return self.create(user=user)
+                try:
+                    return self.create(user=user)
+                except IntegrityError:
+                    # Someone trying to create the same profile was faster. It should be there now though.
+                    return super().get(*args, **kwargs)
 
 
 class Profile(models.Model):
