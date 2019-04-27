@@ -17,6 +17,7 @@ class CommentInline(admin.TabularInline):
     model = Comment
     extra = 0
     fields = ('author', 'text',)
+    autocomplete_fields = ('author',)
 
 
 class PostDraftFilter(admin.filters.SimpleListFilter):
@@ -54,6 +55,7 @@ class PostDraftFilter(admin.filters.SimpleListFilter):
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     fields = ('area', 'author', 'anonym', 'text', 'image',)
+    autocomplete_fields = ('author',)
     list_display = ('get_uri_key', 'area', 'author', 'anonym', 'draft', 'text', 'stack_outstanding',)
     inlines = [PostImageInline, CommentInline, ]
 

@@ -7,13 +7,14 @@ from .models import Ban, Warn
 class BanAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ('user', 'reason', 'comment', 'expiry', 'unbanned')
+            'fields': ('user', 'reason', 'comment', 'expiry', 'unbanned',)
         }),
         ('Banned from', {
-            'fields': ('ban_all', 'ban_post', 'ban_comment', 'ban_flag')
+            'fields': ('ban_all', 'ban_post', 'ban_comment', 'ban_flag',)
         }),
     )
-    list_display = ('user', 'reason', 'comment', '_duration', 'timestamp', 'expiry', 'unbanned', 'auto')
+    autocomplete_fields = ('user',)
+    list_display = ('user', 'reason', 'comment', '_duration', 'timestamp', 'expiry', 'unbanned', 'auto',)
 
     list_filter = ('unbanned', 'auto')
     search_fields = ['user__username']
@@ -21,7 +22,8 @@ class BanAdmin(admin.ModelAdmin):
 
 @admin.register(Warn)
 class WarnAdmin(admin.ModelAdmin):
-    fields = ('user', 'reason', 'comment')
-    list_display = ('user', 'reason', 'comment', 'timestamp')
+    fields = ('user', 'reason', 'comment',)
+    autocomplete_fields = ('user',)
+    list_display = ('user', 'reason', 'comment', 'timestamp',)
 
     search_fields = ['user__username']
