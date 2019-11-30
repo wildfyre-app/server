@@ -1,12 +1,14 @@
 import unittest
+
 import django
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 
-from areas.models import Area, Post, Comment
-from .models import Flag
+from areas.models import Area, Comment, Post
+
 from .admin import FlagAdmin
+from .models import Flag
 
 
 class FlagTest(TestCase):

@@ -3,9 +3,9 @@ Definition of urls for api.
 """
 
 from django.conf import settings
-from django.urls import include, path
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.urls import include, path
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin

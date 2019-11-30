@@ -1,7 +1,7 @@
 from io import StringIO
 
-from django.test import TestCase
 from django.core import management
+from django.test import TestCase
 
 
 class MigrationsTest(TestCase):

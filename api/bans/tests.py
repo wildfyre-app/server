@@ -1,11 +1,12 @@
-import django
 from datetime import timedelta
+
+import django
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
+
 from rest_framework import status
 from rest_framework.test import APITestCase
-
-from django.contrib.auth import get_user_model
 
 from .models import Ban, Warn
 from .views import BanView

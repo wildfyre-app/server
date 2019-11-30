@@ -1,20 +1,19 @@
 import math
 
+from django.db.models import F
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+
 from rest_framework import generics, mixins, permissions, status
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
-from django.http import Http404
-from django.shortcuts import get_object_or_404
-from django.db.models import F
 
-
-from bans.permissions import MayPost, MayComment, MayFlagPost, MayFlagComment
+from bans.permissions import MayComment, MayFlagComment, MayFlagPost, MayPost
+from flags.serializers import FlagSerializer
 
 from . import serializers
 from .models import Area, Post, Reputation
-from .permissions import IsOwnerOrReadOnly, IsOwnerOrReadCreateOnly, IsInStack
-
-from flags.serializers import FlagSerializer
+from .permissions import IsInStack, IsOwnerOrReadCreateOnly, IsOwnerOrReadOnly
 
 
 class AreaMixin():

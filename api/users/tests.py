@@ -1,13 +1,15 @@
 import django
-from django.urls import reverse
-from django.test import TestCase
-from rest_framework import status
-from rest_framework.test import APIRequestFactory, force_authenticate, APITestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.test import TestCase
+from django.urls import reverse
 
-from .views import *
+from rest_framework import status
+from rest_framework.test import APIRequestFactory, APITestCase, force_authenticate
+
 from .models import *
+from .views import *
+
 
 class ProfileTest(TestCase):
     def setUp(self):

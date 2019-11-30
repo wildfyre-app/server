@@ -5,7 +5,7 @@ from random import randint, sample
 
 from django.conf import settings
 from django.db import models
-from django.db.models import F, Q, Case, When
+from django.db.models import Case, F, Q, When
 from django.utils import timezone
 
 

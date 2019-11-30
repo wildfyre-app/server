@@ -1,12 +1,12 @@
 from io import BytesIO
-from PIL import Image
-
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.files.base import ContentFile
-
-from sampledata import register
 
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
+from PIL import Image
+
+from sampledata import register
 
 from .models import Area, Post
 

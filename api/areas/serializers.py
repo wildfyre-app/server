@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from .models import Area, Post, PostImage, Comment, Reputation
+from core.validators import FileSizeValidator
 from users.serializers import ProfileSerializer
 
-from core.validators import FileSizeValidator
+from .models import Area, Comment, Post, PostImage, Reputation
 
 
 class AreaSerializer(serializers.ModelSerializer):

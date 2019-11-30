@@ -1,9 +1,11 @@
 import django
 from django.urls import reverse
+
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from . import BAN_REASON_CHOICES
+
 
 class ReasonTest(APITestCase):
     def test_ban_reason(self):

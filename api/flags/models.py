@@ -1,11 +1,11 @@
 from enum import Enum
 
-from django.db import models
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.conf import settings
+from django.db import models
 
-from choices import FlagReason, FLAG_REASON_CHOICES
+from choices import FLAG_REASON_CHOICES, FlagReason
 
 
 class Flag(models.Model):

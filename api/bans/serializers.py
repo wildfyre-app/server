@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Ban, BAN_REASON_CHOICES
+from .models import BAN_REASON_CHOICES, Ban
 
 
 class BanSerializer(serializers.ModelSerializer):

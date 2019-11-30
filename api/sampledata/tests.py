@@ -1,8 +1,8 @@
 from io import StringIO
 
-from django.test import TestCase, override_settings
 from django.core import management
 from django.core.management.base import CommandError
+from django.test import TestCase, override_settings
 
 
 @override_settings(DEBUG=True)  # sampledata management command will abort unless DEBUG is True.

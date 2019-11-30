@@ -5,7 +5,6 @@
 # Also see https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 import os
 
-
 # Ensure settings were ajusted
 if os.environ.get('SETUP') is None:
     raise NotImplementedError("Configuration required. Check production.dist.py")

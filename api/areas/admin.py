@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.admin.options import IncorrectLookupParameters
 from django.utils.encoding import force_text
 
-from .models import Post, PostImage, Comment
+from .models import Comment, Post, PostImage
 
 
 class PostImageInline(admin.StackedInline):

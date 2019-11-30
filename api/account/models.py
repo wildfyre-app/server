@@ -1,15 +1,12 @@
-from django.db import models
-
-import uuid
 import datetime
+import uuid
 from secrets import token_urlsafe
-from django.core.exceptions import ObjectDoesNotExist
-
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import get_template
 
 from django.conf import settings
-
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import EmailMultiAlternatives
+from django.db import models
+from django.template.loader import get_template
 from django.utils import timezone
 
 

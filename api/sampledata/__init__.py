@@ -1,6 +1,5 @@
 from .decorators import register
 
-
 __all__ = [
     "AlreadyRegisterd", "NotRegistered",
     "sampledata", "register"

@@ -1,6 +1,6 @@
-from sampledata import register
-
 from django.contrib.auth import get_user_model
+
+from sampledata import register
 
 from .models import Profile
 

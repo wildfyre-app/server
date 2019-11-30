@@ -1,19 +1,21 @@
 import unittest
+from io import BytesIO
+
 import django
+from django.contrib.auth import get_user_model
 from django.urls import reverse
+
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from io import BytesIO
 from PIL import Image
 
-from django.contrib.auth import get_user_model
-
-from . import get_postid
-from .views import *
-from .models import *
 from bans.models import Ban
 from flags.models import Flag, FlagComment
+
+from . import get_postid
+from .models import *
+from .views import *
 
 
 def create_areas():
