@@ -4,10 +4,10 @@ from secrets import token_urlsafe
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import EmailMultiAlternatives
 from django.db import models
-from django.template.loader import get_template
 from django.utils import timezone
+
+from . import send_mail
 
 
 def token_default():
@@ -29,18 +29,11 @@ class ConfirmMail(models.Model):
             pass
 
         returned = super().save(force_insert, force_update, using, update_fields)
-
-        # Send mail
-        context = {'username': self.user.username, 'pk': self.pk, 'token': self.token}
-        mail_plain = get_template('account/mail_confirm.txt').render(context)
-        mail_html = get_template('account/mail_confirm.html').render(context)
-
-        subject = "[WildFyre] Please confirm your email"
-
-        msg = EmailMultiAlternatives(subject, mail_plain, "noreply@wildfyre.net", [self.new_mail])
-        msg.attach_alternative(mail_html, "text/html")
-        msg.send()
-
+        send_mail('confirm', "Please confirm your email", self.new_mail, {
+            'username': self.user.username,
+            'pk': self.pk,
+            'token': self.token,
+        })
         return returned
 
 
@@ -59,15 +52,8 @@ class ResetPassword(models.Model):
     expire_date = models.DateTimeField(db_index=True, default=expire_date_default)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        # Send mail
-        context = {'username': self.user.username, 'token': self.token}
-        mail_plain = get_template('account/mail_passwordreset.txt').render(context)
-        mail_html = get_template('account/mail_passwordreset.html').render(context)
-
-        subject = "[WildFyre] Password reset confirmation"
-
-        msg = EmailMultiAlternatives(subject, mail_plain, "noreply@wildfyre.net", [self.user.email])
-        msg.attach_alternative(mail_html, "text/html")
-        msg.send()
-
+        send_mail('passwordreset', "Password reset confirmation", self.user.email, {
+            'username': self.user.username,
+            'token': self.token
+        })
         return super().save(force_insert, force_update, using, update_fields)

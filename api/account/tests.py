@@ -1,3 +1,4 @@
+import threading
 import unittest
 
 import django
@@ -16,6 +17,10 @@ from .views import *
 
 RECAPTCHA_TEST_SECRET = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
 
+
+def join_all_threads():
+    for thread in threading.enumerate():
+        thread is threading.current_thread() or thread.join()
 
 class AccountTest(TestCase):
 
@@ -113,6 +118,7 @@ class EmailTest(TestCase):
         force_authenticate(request, self.user)
         response = AccountView.as_view()(request)
 
+        join_all_threads()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIsNotNone(ConfirmMail.objects.get(user=self.user))
@@ -171,6 +177,7 @@ class RecoverTest(APITestCase):
                 'captcha': "captchaResult"
             })
 
+        join_all_threads()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(mail.outbox), 1)
 
@@ -186,6 +193,7 @@ class RecoverTest(APITestCase):
                 'captcha': "captchaResult"
             })
 
+        join_all_threads()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(mail.outbox), 1)
 
@@ -202,6 +210,7 @@ class RecoverTest(APITestCase):
                 'captcha': "captchaResult"
             })
 
+        join_all_threads()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(mail.outbox), 0)
 
@@ -218,6 +227,7 @@ class RecoverTest(APITestCase):
                 'captcha': "captchaResult"
             })
 
+        join_all_threads()
         self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(mail.outbox), 1)
 
@@ -255,6 +265,7 @@ class RecoverTest(APITestCase):
                 'captcha': "captchaResult"
             })
 
+        join_all_threads()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(mail.outbox), 0)
         self.assertIsNotNone(response.data['transaction'])
@@ -272,6 +283,7 @@ class RecoverTest(APITestCase):
                 'captcha': "captchaResult"
             })
 
+        join_all_threads()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(mail.outbox), 0)
         self.assertIsNotNone(response.data['transaction'])

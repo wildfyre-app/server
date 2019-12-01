@@ -5,14 +5,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import get_template
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 import requests
 
+from . import send_mail
 from .models import ConfirmMail, ResetPassword
 
 
@@ -135,16 +134,7 @@ class RecoverAccountSerializer(serializers.Serializer):
                 usernames.append(user.username)
 
             if len(usernames) > 0:
-                # Send mail
-                context = {'usernames': usernames}
-                mail_plain = get_template('account/mail_usernames.txt').render(context)
-                mail_html = get_template('account/mail_usernames.html').render(context)
-
-                subject = "[WildFyre] Your usernames"
-
-                msg = EmailMultiAlternatives(subject, mail_plain, "noreply@wildfyre.net", [email])
-                msg.attach_alternative(mail_html, "text/html")
-                msg.send()
+                send_mail('usernames', "Your usernames", email, {'usernames': usernames})
 
         return type("", (), dict(transaction=transaction))
 
