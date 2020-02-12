@@ -1,0 +1,11 @@
+image: python:3.6-slim
+
+stages:
+  - test
+
+unit tests:
+  stage: test
+  script:
+    - cd api/
+    - python3 -m pip install --user -r requirements.txt
+    - python3 manage.py test
