@@ -2,6 +2,7 @@ image: python:3.6-slim
 
 stages:
   - test
+  - deploy
 
 unit tests:
   stage: test
@@ -9,3 +10,15 @@ unit tests:
     - cd api/
     - python3 -m pip install --user -r requirements.txt
     - python3 manage.py test
+
+announce on telegram:
+  stage: deploy
+  image: registry.gitlab.com/clovis-ai/dotfiles:latest
+  script:
+    - echo -e "<b>${CI_PROJECT_TITLE}</b>\n" >>changelog
+    - git show -s | sed 's|&|\&amp|g;s|<|\&lt |g;s|>| \&gt|g;s|"|\&quot|g;s|'"'"'|\&#39|g;s|See merge request \(.*\)!\(.*\)$|<a href="https://gitlab.com/\1/-/merge_requests/\2">More information</a>|' >>changelog
+    - echo -e "\n${CI_PROJECT_URL}" >>changelog
+    - cat changelog
+    - announce-telegram changelog "$CHAT_IDS"
+  only:
+    - master
