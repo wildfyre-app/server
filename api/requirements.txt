@@ -1,6 +1,6 @@
 django[argon2]==2.2.7
 django-cors-headers==3.2.0
 djangorestframework==3.10.3
-pillow==6.2.1
+pillow==8.3.2
 psycopg2-binary==2.8.4
 requests==2.22.0
